@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from plotter.processor import DataProcessor
+import re
 
 def test_fix_characters_arg():
     
@@ -97,7 +98,7 @@ def test_remove_cols_cols():
 
     pd.testing.assert_frame_equal(result_df, expected_df)
 
-def test_remove_str_anchors():
+def test_remove_verbal_anchors():
 
     dp = DataProcessor()
 
@@ -117,11 +118,11 @@ def test_remove_str_anchors():
         'Col3': 'Int64'
     })
 
-    result_df = dp.remove_str_anchors(test_df)
+    result_df = dp.remove_verbal_anchors(test_df)
 
     pd.testing.assert_frame_equal(result_df, expected_df)
 
-def test_remove_str_anchors_cols():
+def test_remove_verbal_anchors_cols():
 
     dp = DataProcessor()
 
@@ -140,7 +141,7 @@ def test_remove_str_anchors_cols():
         'Col2': 'Int64'
     })
 
-    result_df = dp.remove_str_anchors(test_df, cols = ['Col1', 'Col2'])
+    result_df = dp.remove_verbal_anchors(test_df, cols = ['Col1', 'Col2'])
 
     pd.testing.assert_frame_equal(result_df, expected_df)
 
@@ -368,6 +369,102 @@ def test_filter_by_iqr_factor():
     
     pd.testing.assert_frame_equal(result_df, expected_df)
 
+def test_validate_one_arg_used_error():
+
+    dp = DataProcessor()
+
+    with pytest.raises(ValueError) as info: 
+        dp._validate_one_arg_used(one = None, two = None)
+
+    assert 'One of the following parameters must be used' in str(info.value)
+
+def test_validate_one_arg_used_warn():
+
+    dp = DataProcessor()
+
+    with pytest.warns(UserWarning) as info: 
+        dp._validate_one_arg_used(one = 1, two = 2, three = None)
+
+    assert len(info) == 1
+    assert 'Only one of the following parameters can be used' in str(info[0].message)
+
+def test_get_cols_prefix():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    expected_cols = ['Test_col_one', 'Test_col2']
+    result_cols = dp.get_cols(test_df, prefix = 'Test')
+
+    assert expected_cols == result_cols
+
+def test_get_cols_suffix():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    expected_cols = ['Col4_test', 'Col5_test']
+    result_cols = dp.get_cols(test_df, suffix = 'test')
+
+    assert expected_cols == result_cols
+
+def test_get_cols_pattern_regex():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    expected_cols = ['Test_col2', 'test_col3', 'Col4_test', 'Col5_test', 'Col6']
+
+    pattern = re.compile(r'col\d', re.IGNORECASE)
+
+    result_cols = dp.get_cols(test_df, pattern = pattern)
+
+    assert expected_cols == result_cols
+
+def test_get_cols_pattern_str():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    expected_cols = ['Test_col2', 'test_col3']
+
+    result_cols = dp.get_cols(test_df, pattern = r'col\d')
+
+    assert expected_cols == result_cols
+
+
 # Standardizing characters in arguments
 test_fix_characters_arg()
 
@@ -380,8 +477,8 @@ test_remove_cols()
 test_remove_cols_cols()
 
 # Removing verbal anchors from values
-test_remove_str_anchors()
-test_remove_str_anchors_cols()
+test_remove_verbal_anchors()
+test_remove_verbal_anchors_cols()
 
 # Filtering straightliners
 test_filter_straightliners()
@@ -402,3 +499,13 @@ test_filter_by_bounds_cols()
 test_filter_by_iqr()
 test_filter_by_iqr_cols()
 test_filter_by_iqr_factor()
+
+# Test one-arg validation
+test_validate_one_arg_used_error()
+test_validate_one_arg_used_warn()
+
+# Test getting column names
+test_get_cols_prefix()
+test_get_cols_suffix()
+test_get_cols_pattern_regex()
+test_get_cols_pattern_str()

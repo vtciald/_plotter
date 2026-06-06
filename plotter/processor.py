@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import re
 import warnings
+import sys
 
 class DataProcessor:
     """Create a DataProcessor object to prepare data for plotting.
@@ -21,14 +22,14 @@ class DataProcessor:
         '\u202f': ' '
     })
 
-    PATTERN_ALIDA_OTHER_OE = re.compile(r'.*other.*_0$', re.IGNORECASE)
+    PATTERN_ALIDA_OTHER_OE = re.compile(r'other.*_0$', re.IGNORECASE)
     PATTERN_LEADING_INT = re.compile(r'^(\d+)', re.IGNORECASE)
     PATTERN_HOW_BIN = re.compile(r'(?P<kind>i|q)(?P<number>\d+\.?\d*)', re.IGNORECASE)
 
     def _prep_args(
         self, 
         df: pd.DataFrame, 
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> tuple[pd.DataFrame, list]:
         """Prepare df and cols arguments.
 
@@ -36,10 +37,10 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list | str | None): A list of strings column names or a single string column name.
+            cols (list[str] | str | None): A list of strings column names or a single string column name.
 
         Returns:
-            tuple[pd.DataFrame, list]: A tuple containing a copy of the DataFrame and the list of column names.
+            tuple[pd.DataFrame, list[str]]: A tuple containing a copy of the DataFrame and the list of column names.
         """
         
         df = df.copy()
@@ -55,14 +56,14 @@ class DataProcessor:
         self, 
         df: pd.DataFrame, 
         pattern: re.Pattern, 
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Remove columns whose labels match the given regex pattern.
 
         Args:
             df (pd.DataFrame): The DataFrame.
             pattern (re.Pattern): A compiled regex pattern.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -71,7 +72,7 @@ class DataProcessor:
         
         df, cols = self._prep_args(df, cols)
         
-        remove_cols = [col for col in cols if re.match(pattern, col)]
+        remove_cols = [col for col in cols if re.search(pattern, col)]
 
         df = df.drop(columns = remove_cols)
 
@@ -80,7 +81,7 @@ class DataProcessor:
     def fix_characters_df(
         self,
         df: pd.DataFrame,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Standardize characters and strip strings in DataFrame.
 
@@ -88,7 +89,7 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -130,13 +131,12 @@ class DataProcessor:
         elif isinstance(arg, dict):
             return {self.fix_characters_arg(k): self.fix_characters_arg(v) for k, v in arg.items()}
         
-        else: 
-            return arg
+        return arg
 
-    def remove_str_anchors(
+    def remove_verbal_anchors(
         self,
         df: pd.DataFrame,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Extract leading digits from string values in a DataFrame.
 
@@ -144,7 +144,7 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -165,7 +165,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame,
         min_unique: int = 2,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Replace straightliners' values with NaN.
 
@@ -173,7 +173,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             min_unique (int, optional): The minimum number of unique values desired in a row. 
                 If below this number, values will be replaced with NaN. Defaults to 2.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -190,7 +190,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame, 
         how: str | list,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Bin DataFrame values.
 
@@ -202,7 +202,7 @@ class DataProcessor:
                 - A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of quartiles or a median split, respectively).
                 - A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width intervals that capture the range of values).
                 - A list of numbers: Explicitly defined bin edges.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -223,7 +223,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame,
         how: str,
-        cols: list,
+        cols: list[str],
     ) -> pd.DataFrame:
         """Bin DataFrame values based on the given string.
 
@@ -232,7 +232,7 @@ class DataProcessor:
         Args:
             df (pd.DataFrame): The DataFrame.
             how (str): String representing the desired binning method, of the form 'q#' or 'i#'.
-            cols (list): A list of columns on which to operate. 
+            cols (list[str]): A list of columns on which to operate. 
 
         Returns:
             pd.DataFrame: The binned DataFrame.
@@ -240,7 +240,7 @@ class DataProcessor:
 
         how_match = re.match(self.PATTERN_HOW_BIN, how)
         if not how_match: 
-            raise ValueError('String argument \'how\' doesn\'t follow the expected pattern: \'q#\' or \'i#\'.')
+            raise ValueError(f'String argument \'{how}\' for parameter \'how\' doesn\'t follow the expected pattern: \'q#\' or \'i#\'.')
         
         how_kind = how_match.group('kind')
         how_number = float(how_match.group('number'))
@@ -249,7 +249,7 @@ class DataProcessor:
             how_number = int(how_number)
         elif isinstance(how_number, float):
             how_number = int(how_number)
-            warnings.warn(f'String argument \'how\' included a float. \'{how}\' was converted to \'{how_kind}{how_number}\'')
+            warnings.warn(f'String argument for parameter \'how\' included a float. \'{how}\' was converted to \'{how_kind}{how_number}\'')
         
         for col in cols:
             if how_kind == 'q':
@@ -262,8 +262,8 @@ class DataProcessor:
     def _bin_by_edges(
         self,
         df: pd.DataFrame,
-        how: list,
-        cols: list,
+        how: list[int | float],
+        cols: list[str],
     ) -> pd.DataFrame:
         """Bin DataFrame values based on the given edges.
 
@@ -271,8 +271,8 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            how (list): List of bin edges.
-            cols (list): A list of columns on which to operate. 
+            how (list[int | float]): List of bin edges.
+            cols (list[str]): A list of columns on which to operate. 
 
         Returns:
             pd.DataFrame: The binned DataFrame.
@@ -289,7 +289,7 @@ class DataProcessor:
         df: pd.DataFrame,
         min_val: int | None = None,
         max_val: int | None = None,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Filter DataFrame values based on the given minimum and maximum.
 
@@ -297,7 +297,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             min (int, optional): The minimum value to keep. Defaults to None.
             max (int, optional): The maximum value to keep. Defaults to None.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -317,7 +317,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame,
         factor: float | int = 1.5,
-        cols: list | str | None = None,
+        cols: list[str] | str | None = None,
     ) -> pd.DataFrame:
         """Filter DataFrame values based on the IQR method.
 
@@ -328,7 +328,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             factor (float | int, optional): The factor by which to multiply the IQR to determine 
                 min and max values. Defaults to 1.5.
-            cols (list | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -346,3 +346,72 @@ class DataProcessor:
         df[cols] = df[cols].where((df[cols] <= maxes) & (df[cols] >= mins))
 
         return df
+    
+    def _validate_one_arg_used(
+        self,
+        **kwargs,  
+    ) -> None:
+        """Validate that only a single argument is not None.
+
+        Returns:
+            None: None. Raises a ValueError if all are None. Raises a warning if multiple arguments were not None.
+        """
+
+        class_name = self.__class__.__name__
+        caller_name = sys._getframe(1).f_code.co_name
+
+        param_list = []
+        arg_list = []
+        
+        for param, arg in kwargs.items():
+            
+            param_list.append(param)
+            
+            if arg is not None: 
+                arg_list.append(arg)
+
+        if len(arg_list) > 1:
+            warnings.warn(f'Only one of the following parameters can be used in {class_name}.{caller_name}: {param_list}. Defaulting to the documented precedence.')
+
+        elif len(arg_list) < 1:
+            raise ValueError(f'One of the following parameters must be used in {class_name}.{caller_name}: {param_list}. All had a value of None.')
+
+        return None
+    
+    def get_cols(
+        self,
+        df: pd.DataFrame,
+        prefix: str | None = None,
+        suffix: str | None = None,
+        pattern: re.Pattern | str | None = None,
+    ) -> list[str]:
+        """Get a list of column names from the DataFrame.
+
+        Args:
+            df (pd.DataFrame): The DataFrame.
+            prefix (str | None, optional): The prefix of desired column names. Defaults to None.
+            suffix (str | None, optional): The suffix of desired column names. Defaults to None.
+            pattern (re.Pattern | str | None, optional): A regex pattern describing the desired column names. Defaults to None.
+
+        Returns:
+            list[str]: The list of desired column names.
+        """
+        
+        self._validate_one_arg_used(prefix = prefix, suffix = suffix, pattern = pattern)
+        
+        cols = df.columns.tolist()
+
+        if prefix is not None:
+            return [col for col in cols if col.startswith(prefix)]
+        
+        elif suffix is not None:
+            return [col for col in cols if col.endswith(suffix)]
+        
+        elif pattern is not None:
+
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
+
+            return [col for col in cols if re.search(pattern, col)]
+        
+        return cols

@@ -29,7 +29,7 @@ class DataProcessor:
     def _prep_args(
         self, 
         df: pd.DataFrame, 
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> tuple[pd.DataFrame, list]:
         """Prepare df and cols arguments.
 
@@ -37,7 +37,7 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list[str] | str | None): A list of strings column names or a single string column name.
+            cols (list[str] | str | re.Pattern | None): A list of strings column names or a single string column name.
 
         Returns:
             tuple[pd.DataFrame, list[str]]: A tuple containing a copy of the DataFrame and the list of column names.
@@ -51,20 +51,28 @@ class DataProcessor:
         elif isinstance(cols, str):
             cols = [cols]
 
+        elif isinstance(cols, re.Pattern):
+            pattern = cols
+            cols = []
+
+            for col in df.columns.tolist():
+                if re.search(pattern, col):
+                    cols.append(col)
+
         return df, cols
     
     def remove_cols(
         self, 
         df: pd.DataFrame, 
         pattern: re.Pattern, 
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Remove columns whose labels match the given regex pattern.
 
         Args:
             df (pd.DataFrame): The DataFrame.
             pattern (re.Pattern): A compiled regex pattern.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -82,7 +90,7 @@ class DataProcessor:
     def fix_characters_df(
         self,
         df: pd.DataFrame,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Standardize characters and strip strings in DataFrame.
 
@@ -90,7 +98,7 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -137,7 +145,7 @@ class DataProcessor:
     def remove_verbal_anchors(
         self,
         df: pd.DataFrame,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Extract leading digits from string values in a DataFrame.
 
@@ -145,7 +153,7 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -166,7 +174,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame,
         min_unique: int = 2,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Replace straightliners' values with NaN.
 
@@ -174,7 +182,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             min_unique (int, optional): The minimum number of unique values desired in a row. 
                 If below this number, values will be replaced with NaN. Defaults to 2.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -191,7 +199,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame, 
         how: str | list,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Bin DataFrame values.
 
@@ -203,7 +211,7 @@ class DataProcessor:
                 - A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of quartiles or a median split, respectively).
                 - A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width intervals that capture the range of values).
                 - A list of numbers: Explicitly defined bin edges.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -293,7 +301,7 @@ class DataProcessor:
         df: pd.DataFrame,
         min_val: int | None = None,
         max_val: int | None = None,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Filter DataFrame values based on the given minimum and maximum.
 
@@ -301,7 +309,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             min (int, optional): The minimum value to keep. Defaults to None.
             max (int, optional): The maximum value to keep. Defaults to None.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -322,7 +330,7 @@ class DataProcessor:
         self,
         df: pd.DataFrame,
         factor: float | int = 1.5,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Filter DataFrame values based on the IQR method.
 
@@ -333,7 +341,7 @@ class DataProcessor:
             df (pd.DataFrame): The DataFrame.
             factor (float | int, optional): The factor by which to multiply the IQR to determine 
                 min and max values. Defaults to 1.5.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -433,7 +441,7 @@ class DataProcessor:
             cols (list[str]): A list of strings column names on which to operate.
 
         Returns:
-            dict[str, str]: _description_
+            dict[str, str]: The updated mapper.
         """
         
         new_mapper = {}
@@ -458,7 +466,7 @@ class DataProcessor:
         df: pd.DataFrame,
         mapper: dict,
         regex: bool = False,
-        cols: list[str] | str | None = None,
+        cols: list[str] | str | re.Pattern | None = None,
     ) -> pd.DataFrame:
         """Rename DataFrame columns according to the given mapper.
 
@@ -467,7 +475,7 @@ class DataProcessor:
             mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to desired column names.
                 Existing column names can take the form of strings and/or compiled regex patterns.
             regex (bool, optional): Whether to treat string keys of mapper as regex patterns. Defaults to False.
-            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+            cols (list[str] | str | re.Pattern | None, optional): A column name or column names on which to operate. 
                 If None, operates on all columns. Defaults to None.
 
         Returns:
@@ -480,3 +488,9 @@ class DataProcessor:
         df = df.rename(columns = mapper)
         
         return df
+    
+    # TODO: Add a column-aggregator method, with how options: min, max, mean, median, sum, or, and, etc.?
+    # TODO: Add methods for sorting, pinning, and adding "missing" columns
+    # TODO: Add methods for getting basic stats (e.g., mean, MOE, n), including other CI-calcualtion methods beyong the standard
+    # TODO: Start a new file/class with methods relating to handling graph labels (e.g., wrapping, trimming, etc.)
+    # TODO: Start a new file/class with methods relating to creating the graphs

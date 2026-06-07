@@ -58,6 +58,26 @@ def test_fix_characters_df_cols():
 
     pd.testing.assert_frame_equal(result_df, expected_df)
 
+def test_fix_characters_df_cols_regex():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        '“Derp’': ['Bad\u2014String\u00A0Value', 'Hello\xa0World–'],
+        '“Test’': ['Bad\u2014String\u00A0Value', 'Hello\xa0World–'],
+        'Col2': [25, 50]
+    })
+
+    expected_df = pd.DataFrame({
+        '"Derp\'': ['Bad-String Value', 'Hello World-'],
+        '"Test\'': ['Bad-String Value', 'Hello World-'],
+        'Col2': [25, 50]
+    })
+
+    result_df = dp.fix_characters_df(test_df, cols = re.compile(r'e'))
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
 def test_remove_cols():
 
     dp = DataProcessor()
@@ -600,6 +620,7 @@ test_fix_characters_arg()
 # Standardizing characters in dfs
 test_fix_characters_df()
 test_fix_characters_df_cols()
+test_fix_characters_df_cols_regex()
 
 # Removing columns from dfs
 test_remove_cols()

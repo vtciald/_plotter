@@ -464,6 +464,135 @@ def test_get_cols_pattern_str():
 
     assert expected_cols == result_cols
 
+def test_rename_cols():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    mapper = {
+        'Test_col_one': 'New label 1',
+        '4_t': 'New label 2'
+    }
+
+    expected_df = pd.DataFrame({
+        'New label 1': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    result_df = dp.rename_cols(test_df, mapper)
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_rename_cols_regex_arg():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    mapper = {
+        'Test_col_one': 'New label 1',
+        '4_t': 'New label 2'
+    }
+
+    expected_df = pd.DataFrame({
+        'New label 1': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'New label 2': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    result_df = dp.rename_cols(test_df, mapper, regex = True)
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_rename_cols_regex_pattern():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    mapper = {
+        'Test_col_one': 'New label 1',
+        re.compile('4_t'): 'New label 2'
+    }
+
+    expected_df = pd.DataFrame({
+        'New label 1': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'New label 2': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    result_df = dp.rename_cols(test_df, mapper)
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+def test_rename_cols_duplicate():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Test_col_one': [1, 2, 3],
+        'Test_col2': [4, 5, 6],
+        'test_col3': [7, 8, 9],
+        'Col4_test': [10, 11, 12],
+        'Col5_test': [13, 14, 15],
+        'Col6': [16, 17, 18],
+    })
+
+    mapper = {
+        'Test_col_one': 'New label 1',
+        re.compile(r'col\d', re.IGNORECASE): 'New label 2'
+    }
+
+    data_rows = [
+        [1, 4, 7, 10, 13, 16],
+        [2, 5, 8, 11, 14, 17],
+        [3, 6, 9, 12, 15, 18],
+    ]
+    columns = [
+        'New label 1', 'New label 2', 'New label 2', 'New label 2', 'New label 2', 'New label 2',
+    ]
+
+    expected_df = pd.DataFrame(
+        data_rows,
+        columns = columns
+    )
+
+    result_df = dp.rename_cols(test_df, mapper)
+
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
 
 # Standardizing characters in arguments
 test_fix_characters_arg()
@@ -509,3 +638,9 @@ test_get_cols_prefix()
 test_get_cols_suffix()
 test_get_cols_pattern_regex()
 test_get_cols_pattern_str()
+
+# Test renaming columns
+test_rename_cols()
+test_rename_cols_regex_arg()
+test_rename_cols_regex_pattern()
+test_rename_cols_duplicate()

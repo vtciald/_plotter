@@ -47,6 +47,7 @@ class DataProcessor:
 
         if cols is None:
             cols = df.columns.tolist()
+
         elif isinstance(cols, str):
             cols = [cols]
 
@@ -239,6 +240,7 @@ class DataProcessor:
         """
 
         how_match = re.match(self.PATTERN_HOW_BIN, how)
+
         if not how_match: 
             raise ValueError(f'String argument \'{how}\' for parameter \'how\' doesn\'t follow the expected pattern: \'q#\' or \'i#\'.')
         
@@ -247,6 +249,7 @@ class DataProcessor:
 
         if how_number.is_integer():
             how_number = int(how_number)
+
         elif isinstance(how_number, float):
             how_number = int(how_number)
             warnings.warn(f'String argument for parameter \'how\' included a float. \'{how}\' was converted to \'{how_kind}{how_number}\'')
@@ -254,6 +257,7 @@ class DataProcessor:
         for col in cols:
             if how_kind == 'q':
                 df[col] = pd.qcut(df[col], how_number).astype(str)
+
             elif how_kind == 'i':
                 df[col] = pd.cut(df[col], how_number).astype(str)
 
@@ -308,6 +312,7 @@ class DataProcessor:
 
         if min_val is not None:
             df[cols] = df[cols].where(df[cols] >= min_val)
+
         if max_val is not None:
             df[cols] = df[cols].where(df[cols] <= max_val)
 
@@ -364,7 +369,6 @@ class DataProcessor:
         arg_list = []
         
         for param, arg in kwargs.items():
-            
             param_list.append(param)
             
             if arg is not None: 
@@ -408,10 +412,71 @@ class DataProcessor:
             return [col for col in cols if col.endswith(suffix)]
         
         elif pattern is not None:
-
             if isinstance(pattern, str):
                 pattern = re.compile(pattern)
 
             return [col for col in cols if re.search(pattern, col)]
         
         return cols
+    
+    def _stringify_mapper(
+        self,
+        mapper: dict[str | re.Pattern, str],
+        regex: bool,
+        cols: list[str],
+    ) -> dict[str, str]:
+        """Standardize mapper argument to a dictionary of strings.
+
+        Args:
+            mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex patterns to strings.
+            regex (bool): Whether to treat string keys of mapper as regex patterns.
+            cols (list[str]): A list of strings column names on which to operate.
+
+        Returns:
+            dict[str, str]: _description_
+        """
+        
+        new_mapper = {}
+        
+        for k, v in mapper.items():
+
+            if isinstance(k, re.Pattern) or regex == True:
+                if isinstance(k, str):
+                    k = re.compile(k)
+
+                for col in cols:
+                    if re.search(k, col):
+                        new_mapper[col] = v
+
+            else:
+                new_mapper[k] = v
+                
+        return new_mapper      
+    
+    def rename_cols(
+        self,
+        df: pd.DataFrame,
+        mapper: dict,
+        regex: bool = False,
+        cols: list[str] | str | None = None,
+    ) -> pd.DataFrame:
+        """Rename DataFrame columns according to the given mapper.
+
+        Args:
+            df (pd.DataFrame): The DataFrame.
+            mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to desired column names.
+                Existing column names can take the form of strings and/or compiled regex patterns.
+            regex (bool, optional): Whether to treat string keys of mapper as regex patterns. Defaults to False.
+            cols (list[str] | str | None, optional): A column name or column names on which to operate. 
+                If None, operates on all columns. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The DataFrame with renamed columns.
+        """
+        
+        df, cols = self._prep_args(df, cols)
+        mapper = self._stringify_mapper(mapper, regex, cols)
+
+        df = df.rename(columns = mapper)
+        
+        return df

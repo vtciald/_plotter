@@ -864,6 +864,47 @@ def test_agg_rows_str():
 
     pd.testing.assert_series_equal(result, expected)
 
+def test_compute_ci_z():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0],
+        'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5, 0.5345, 8, 0.1296, 0.8704],
+        'Col2': [1.875, 2.1002, 8, 0.4197, 3.3303],
+        },
+        index = ['mean', 'std', 'count', 'lower', 'upper']
+    )
+
+    result = dp.compute_ci(test_df, how = 'z')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_wald():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0],
+        'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5, np.nan, 8, 0.1535, 0.8465],
+        },
+        index = ['mean', 'std', 'count', 'lower', 'upper']
+    )
+
+    result = dp.compute_ci(test_df, how = 'wald', cols = 'Col1')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
 
 # Standardizing characters in arguments
 test_fix_characters_arg()
@@ -931,3 +972,7 @@ test_agg_cols_or_drop_inputs()
 # Test row aggregation
 test_agg_rows_list()
 test_agg_rows_str()
+
+# Test computing CIs
+test_compute_ci_z()
+test_compute_ci_wald()

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy.stats 
 import re
 import warnings
 import sys
@@ -714,8 +715,235 @@ class DataProcessor:
         for col in cols:
             how_map[col] = how     
 
-        return df[cols].agg(how_map, axis = 0)        
+        return df[cols].agg(how_map, axis = 0)    
 
-    # TODO: Add methods for getting basic stats (e.g., mean, MOE, n), including other CI-calcualtion methods beyond the standard
+    def _validate_ci_args(
+        self,
+        how: str,
+        alpha: float,
+    ) -> tuple[str, float]:
+        """Validate the arguments given to compute_ci().
+
+        Additionally converts the string argument to 'how' to lowercase before validating.
+
+        Args:
+            how (str): The desired CI-calculation strategy.
+            alpha (float): The desired alpha.
+
+        Raises:
+            ValueError: If string argument for 'how' isn't recognized.
+            ValueError: If float argument for 'alpha' isn't between 0 and 1 exclusive.
+
+        Returns:
+            tuple[str, float]: A tuple 'how' (lowercase) and 'alpha'.
+        """
+        
+        valid_hows = {'z', 't', 'wald', 'wilson', 'bootstrap', 'clopper-pearson'}
+
+        how = how.lower()
+
+        if how not in valid_hows:
+            raise ValueError(f'Unrecognized argument for how: \'{how}\'. Supported choices: {valid_hows}')
+        
+        if not (0 < alpha < 1):
+            raise ValueError(f'Invalid argument for alpha: \'{alpha}\'. Values should be greater than 0 and less than 1. Typical values might be in the range of 0.01 to 0.1.')
+        
+        elif alpha < 0.01 or alpha > 0.1:
+            warnings.warn(f'Argument for alpha is outside of the typical range: \'{alpha}\'. Typical values might be in the range of 0.01 to 0.1')
+
+        return how, alpha
+
+    def _ci_z(
+        self,
+        df: pd.DataFrame,
+        cols: list[str],
+        alpha: float,
+        two_tailed: bool,
+    ) -> pd.DataFrame:
+        """Calculate Z-distribution confidence intervals.
+
+        Args:
+            df (pd.DataFrame): The DataFrame.
+            cols (list[str]): Columns on which to operate.
+            alpha (float): The desired alpha.
+            two_tailed (bool): If true, splits the alpha between the lower and upper tails.
+
+        Returns:
+            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 'mean', 'std', 'count', 'lower', 'upper'.
+        """
+        
+        if two_tailed:
+            alpha = alpha / 2
+        
+        result = df[cols].agg(['mean', 'std', 'count'], axis = 0)
+        
+        crit_z = scipy.stats.norm.ppf(q = 1 - alpha)
+
+        se = result.loc['std'] / np.sqrt(result.loc['count'])
+        moe = crit_z * se
+
+        result.loc['lower'] = result.loc['mean'] - moe
+        result.loc['upper'] = result.loc['mean'] + moe
+
+        return result
+
+    def _ci_wald(
+        self,
+        df: pd.DataFrame,
+        cols: list[str],
+        alpha: float,
+        two_tailed: bool,
+    ) -> pd.DataFrame:
+        """Calculate Wald confidence intervals.
+
+        Args:
+            df (pd.DataFrame): The DataFrame.
+            cols (list[str]): Columns on which to operate.
+            alpha (float): The desired alpha.
+            two_tailed (bool): If true, splits the alpha between the lower and upper tails.
+
+        Note:
+            Since Wald confidence intervals are calculated for proportions, the 'std' row will be filled with np.nan to avoid confusion.
+
+        Returns:
+            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 'mean', 'std', 'count', 'lower', 'upper'.
+        """
+        
+        if two_tailed:
+            alpha = alpha / 2
+        
+        result = df[cols].agg(['mean', 'std', 'count'], axis = 0)
+        result.loc['std'] = np.nan
+        
+        crit_z = scipy.stats.norm.ppf(q = 1 - alpha)
+
+        se = np.sqrt((result.loc['mean'] * (1 - result.loc['mean'])) / result.loc['count'])
+        moe = crit_z * se
+
+        result.loc['lower'] = result.loc['mean'] - moe
+        result.loc['upper'] = result.loc['mean'] + moe
+
+        return result
+
+    def compute_ci(
+        self,
+        df: pd.DataFrame,
+        how: str,
+        alpha: float = 0.05,
+        two_tailed: bool = True,
+        bonferroni: bool = False,
+        cols: list[str] | str | None = None,
+        prefix: str | None = None,
+        suffix: str | None = None,
+        pattern: str | re.Pattern | None = None,       
+    ) -> pd.DataFrame:
+        """Compute confidence intervals according to the given strategy.
+        
+        Also includes associated statistics used in the calcualtion.
+
+        Args:
+            df (pd.DataFrame): The DataFrame.
+            how (str, optional): The CI-calculation strategy. Supported choices: 'z', 't', 'wald', 'wilson', 'bootstrap', 'clopper-pearson'. 
+            alpha (float, optional): The desired alpha. Defaults to 0.05.
+            two_tailed (bool, optional): If true, splits the alpha between the lower and upper tails. Defaults to True.
+            bonferroni (bool, optional): If true, applies a Bonferroni correction based on the number of columns. Defaults to False.
+            cols (list[str] | str | None, optional): Column(s) on which to operate.
+                If None, includes all columns. Defaults to None.
+            prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
+            suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+
+        Raises:
+            NotImplementedError: If the CI-calcualtion strategy is not yet implemented.
+
+        Notes:
+            * Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
+            taking the intersection of matching columns. In other words, only columns matching all selection
+            criteria will be selected.
+            * For CI-calculation strategies that are intended for proportions (e.g., Wald), the 'std' row of the
+            resulting DataFrame will contain np.nan to avoid confusion.
+
+        Returns:
+            pd.DataFrame: A DataFrame with columns matching those specified in the column-selection parameters 
+                and indices 'mean', 'std', 'count', 'lower', 'upper'.
+        """
+        
+        df, cols = self._prep_args(df, cols, prefix, suffix, pattern)
+
+        how, alpha = self._validate_ci_args(how, alpha)
+
+        if bonferroni:
+            alpha = alpha / len(cols)
+
+        result = pd.DataFrame(
+            columns = cols,
+            index = ['mean', 'std', 'count', 'lower', 'upper']
+        )
+
+        if how == 'z':
+            result = self._ci_z(df, cols, alpha, two_tailed)
+
+        elif how == 't':
+            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
+            #result = self._ci_t(df, cols, alpha, two_tailed)
+            # TODO: Implement CI-calculation strategy.
+
+        elif how == 'wald':
+            result = self._ci_wald(df, cols, alpha, two_tailed)
+
+        elif how == 'wilson':
+            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
+            #result = self._ci_wilson(df, cols, alpha, two_tailed)
+            # TODO: Implement CI-calculation strategy.
+
+        elif how == 'bootstrap':
+            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
+            #result = self._ci_bootstrap(df, cols, alpha, two_tailed)
+            # TODO: Implement CI-calculation strategy.
+
+        elif how == 'clopper-pearson':
+            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
+            #result = self._ci_clopper_pearson(df, cols, alpha, two_tailed)
+            # TODO: Implement CI-calculation strategy.
+
+        else:
+            raise ValueError(f'CI-calcualtion strategy \'{how}\' is not recognized. Supported choices: \'z\', \'t\', \'wilson\', \'bootstrap\', \'clopper-pearson\'.')
+
+        return result  
+
+    # def _apply_p_correction(
+    #     self,
+    #     df: pd.DataFrame,
+    #     correction: str,
+    # ):
+        
+    #     valid_corrections = {'bonferroni', 'holm-bonferroni', 'benjamini-hochberg'}
+
+    #     df, _ = self._prep_args(df, None, None, None, None)
+
+    #     # TODO: add a _validate_p_correction_args() method to handle some of the below?
+
+    #     correction = correction.lower()
+
+    #     if correction not in valid_corrections:
+    #         raise ValueError(f'Unrecognized argument for correction: \'{correction}\'. Supported choices: {valid_corrections}')
+        
+    #     if 'p_value' not in df.columns:
+    #         raise ValueError(f'DataFrame to _apply_correction must have a column \'p_value\' containing p values.')
+        
+    #     if correction == 'bonferroni':
+    #         df['p_value'] *= len(df['p_value'])
+    #         # TODO: Test this correction method.
+
+    #     elif correction == 'holm-bonferroni':
+    #         raise NotImplementedError(f'Correction strategy \'{correction}\' is not yet implemented.')
+    #         # TODO: Implement correction method
+
+    #     elif correction == 'benjamini-hochberg':
+    #         raise NotImplementedError(f'Correction strategy \'{correction}\' is not yet implemented.')
+    #         # TODO: Implement correction method
+
+    #     return df  
+
     # TODO: Start a new file/class with methods relating to handling graph labels (e.g., wrapping, trimming, etc.)
     # TODO: Start a new file/class with methods relating to creating the graphs (include sorting, pinning, and adding "missing" columns - leaning on categorical dtype?)

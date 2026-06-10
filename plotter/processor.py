@@ -825,8 +825,7 @@ class DataProcessor:
             dtype = float,
         )
 
-        return result
-        
+        return result    
 
     def _calc_ci_parametric(
         self,
@@ -1040,7 +1039,11 @@ class DataProcessor:
         proportion_methods = {'wald', 'wilson', 'agresti_coull', 'clopper_pearson', 'beta', 'jeffreys'}
         bootstrap_methods = {'bootstrap_bca', 'bootstrap_percentile', 'bootstrap_basic'}
 
-        method, alpha = self._validate_ci_args(method, alpha, parametric_methods | proportion_methods | bootstrap_methods)
+        method, alpha = self._validate_ci_args(
+            method,
+            alpha, 
+            parametric_methods | proportion_methods | bootstrap_methods
+        )
 
         if method in parametric_methods:
             result = self._calc_ci_parametric(df, cols, alpha, method)

@@ -874,13 +874,34 @@ def test_compute_ci_z():
     })
 
     expected = pd.DataFrame({
-        'Col1': [0.5, 0.5345, 8, 0.1296, 0.8704],
-        'Col2': [1.875, 2.1002, 8, 0.4197, 3.3303],
+        'Col1': [0.5, 0.1296, 0.8704, 8],
+        'Col2': [1.875, 0.4197, 3.3303, 8],
         },
-        index = ['mean', 'std', 'count', 'lower', 'upper']
+        index = ['point_estimate', 'lower', 'upper', 'count']
     )
 
-    result = dp.compute_ci(test_df, how = 'z')
+    result = dp.calc_ci(test_df, method = 'z')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_t():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0],
+        'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5, 0.0531, 0.9469, 8],
+        'Col2': [1.875, 0.1192, 3.6308, 8],
+        },
+        index = ['point_estimate', 'lower', 'upper', 'count']
+    )
+
+    result = dp.calc_ci(test_df, method = 't')
     result = result.round(4)
 
     pd.testing.assert_frame_equal(result, expected)
@@ -895,12 +916,89 @@ def test_compute_ci_wald():
     })
 
     expected = pd.DataFrame({
-        'Col1': [0.5, np.nan, 8, 0.1535, 0.8465],
+        'Col1': [0.5, 0.1535, 0.8465, 8],
         },
-        index = ['mean', 'std', 'count', 'lower', 'upper']
+        index = ['point_estimate', 'lower', 'upper', 'count']
     )
 
-    result = dp.compute_ci(test_df, how = 'wald', cols = 'Col1')
+    result = dp.calc_ci(test_df, method = 'wald', cols = 'Col1')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_wilson():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0],
+        'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5, 0.2152, 0.7848, 8],
+        },
+        index = ['point_estimate', 'lower', 'upper', 'count']
+    )
+
+    result = dp.calc_ci(test_df, method = 'wilson', cols = 'Col1')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_ac():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5333, 0.3011, 0.752, 15],
+        },
+        index = ['point_estimate', 'lower', 'upper', 'count']
+    )
+
+    result = dp.calc_ci(test_df, method = 'agresti_coull')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_cp():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5333, 0.2659, 0.7873, 15],
+        },
+        index = ['point_estimate', 'lower', 'upper', 'count']
+    )
+
+    result = dp.calc_ci(test_df, method = 'clopper_pearson')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_compute_ci_jeffreys():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [0.5333, 0.2939, 0.7612, 15],
+        },
+        index = ['point_estimate', 'lower', 'upper', 'count']
+    )
+
+    result = dp.calc_ci(test_df, method = 'jeffreys')
     result = result.round(4)
 
     pd.testing.assert_frame_equal(result, expected)
@@ -975,4 +1073,9 @@ test_agg_rows_str()
 
 # Test computing CIs
 test_compute_ci_z()
+test_compute_ci_t()
 test_compute_ci_wald()
+test_compute_ci_wilson()
+test_compute_ci_ac()
+test_compute_ci_cp()
+test_compute_ci_jeffreys()

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import scipy.stats 
+import scipy.stats
+from statsmodels.stats.proportion import proportion_confint
 import re
 import warnings
 import sys
@@ -45,10 +46,12 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): A column-name prefix. Defaults to None.
             suffix (str | None, optional): A column-name suffix. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A column-name regex pattern. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A column-name regex pattern. 
+                Defaults to None.
 
         Returns:
-            tuple[pd.DataFrame, list[str]]: A tuple containing a copy of the DataFrame and the list of column names.
+            tuple[pd.DataFrame, list[str]]: A tuple containing a copy of the DataFrame and the 
+                list of column names.
         """
         
         df = df.copy()
@@ -82,7 +85,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns to remove. Defaults to None.
             suffix (str | None, optional): The suffix of columns to remove. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to remove. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to 
+                remove. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -117,7 +121,8 @@ class DataProcessor:
                 If None, cleans all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns to clean. Defaults to None.
             suffix (str | None, optional): The suffix of columns to clean. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to clean. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to 
+                clean. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -183,7 +188,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
+                operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -225,7 +231,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
+                operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -258,14 +265,17 @@ class DataProcessor:
         Args:
             df (pd.DataFrame): The DataFrame.
             how (str | list): The binning method to apply. Options include:
-                - A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of quartiles or a median split, respectively).
-                - A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width intervals that capture the range of values).
-                - A list of numbers: Explicitly defined bin edges.
+                * A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of 
+                quartiles or a median split, respectively).
+                * A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width 
+                intervals that capture the range of values).
+                * A list of numbers: Explicitly defined bin edges.
             cols (list[str] | str | None, optional): Column(s) on which to operate.
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
+                operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -311,7 +321,10 @@ class DataProcessor:
         how_match = re.match(self.PATTERN_HOW_BIN, how)
 
         if not how_match: 
-            raise ValueError(f'String argument \'{how}\' for parameter \'how\' doesn\'t follow the expected pattern: \'q#\' or \'i#\'.')
+            raise ValueError(
+                f'String argument \'{how}\' for parameter \'how\' doesn\'t follow '
+                'the expected pattern: \'q#\' or \'i#\'.'
+            )
         
         how_kind = how_match.group('kind')
         how_number = float(how_match.group('number'))
@@ -321,7 +334,10 @@ class DataProcessor:
 
         elif isinstance(how_number, float):
             how_number = int(how_number)
-            warnings.warn(f'String argument for parameter \'how\' included a float. \'{how}\' was converted to \'{how_kind}{how_number}\'')
+            warnings.warn(
+                f'String argument for parameter \'how\' included a float. \'{how}\' '
+                'was converted to \'{how_kind}{how_number}\''
+            )
         
         for col in cols:
             if how_kind == 'q':
@@ -379,7 +395,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
+                to operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -424,7 +441,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
+                to operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -473,10 +491,16 @@ class DataProcessor:
                 arg_list.append(arg)
 
         if len(arg_list) > 1:
-            warnings.warn(f'Only one of the following parameters can be used in {class_name}.{caller_name}: {param_list}. Defaulting to the documented precedence.')
+            warnings.warn(
+                f'Only one of the following parameters can be used in {class_name}.{caller_name}: '
+                '{param_list}. Defaulting to the documented precedence.'
+            )
 
         elif len(arg_list) < 1:
-            raise ValueError(f'One of the following parameters must be used in {class_name}.{caller_name}: {param_list}. All had a value of None.')
+            raise ValueError(
+                f'One of the following parameters must be used in {class_name}.{caller_name}: '
+                '{param_list}. All had a value of None.'
+            )
 
         return None
     
@@ -496,7 +520,8 @@ class DataProcessor:
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of desired column names. Defaults to None.
             suffix (str | None, optional): The suffix of desired column names. Defaults to None.
-            pattern (re.Pattern | None, optional): A regex pattern describing desired column names. Defaults to None.
+            pattern (re.Pattern | None, optional): A regex pattern describing desired column 
+                names. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -537,7 +562,8 @@ class DataProcessor:
         """Standardize mapper argument to a dictionary of strings.
 
         Args:
-            mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex patterns to strings.
+            mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex 
+                patterns to strings.
             regex_keys (bool): Whether to treat string keys of mapper as regex patterns.
             cols (list[str]): A list of column names on which to operate.
 
@@ -576,14 +602,17 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to desired column names.
-                Existing column names can take the form of strings and/or compiled regex patterns.
-            regex_keys (bool, optional): Whether to treat string keys of mapper as regex patterns. Defaults to False.
+            mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to 
+                desired column names. Existing column names can take the form of strings and/or 
+                compiled regex patterns.
+            regex_keys (bool, optional): Whether to treat string keys of mapper as regex patterns.
+                Defaults to False.
             cols (list[str] | str | None, optional): Column(s) on which to operate.
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
+                to operate. Defaults to None.
 
         Note:
             Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
@@ -621,12 +650,14 @@ class DataProcessor:
             how (str): The aggregation strategy. Supported choices: 'min', 'max', 'sum', 'mean', 'median',
                 'count', 'std', 'var', 'prod', 'or', 'and'.
             target_col (str): The target column name in which to store the aggregated values.
-            drop_inputs (bool): If true, drops the columns used in aggregation (i.e., those indicated by 'cols'). Defaults to False.
+            drop_inputs (bool): If true, drops the columns used in aggregation (i.e., those indicated 
+                by 'cols'). Defaults to False.
             cols (list[str] | str | None, optional): Column(s) to aggregate.
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
             suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns 
+                to aggregate. Defaults to None.
 
         Raises:
             ValueError: If the aggregation strategy specified in 'how' isn't recognized.
@@ -678,13 +709,14 @@ class DataProcessor:
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            how (str | list[str]): The aggregation strategy. Supported choices: 'min', 'max', 'sum', 'mean', 'median',
-                'count', 'std', 'var', 'prod'.
+            how (str | list[str]): The aggregation strategy. Supported choices: 'min', 'max', 
+                'sum', 'mean', 'median', 'count', 'std', 'var', 'prod'.
             cols (list[str] | str | None, optional): Column(s) to aggregate.
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
             suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns 
+                to aggregate. Defaults to None.
 
         Raises:
             ValueError: If a given aggregation strategy is unrecognized.
@@ -706,11 +738,15 @@ class DataProcessor:
         if isinstance(how, list):
             for val in how:
                 if val not in valid_hows:
-                    raise ValueError(f'Unrecognized aggregation strategy \'{how}\'. Supported choices: {valid_hows}')
+                    raise ValueError(
+                        f'Unrecognized aggregation strategy \'{how}\'. Supported choices: {valid_hows}'
+                    )
                 
         elif isinstance(how, str):
             if how not in valid_hows:
-                raise ValueError(f'Unrecognized aggregation strategy \'{how}\'. Supported choices: {valid_hows}')
+                raise ValueError(
+                    f'Unrecognized aggregation strategy \'{how}\'. Supported choices: {valid_hows}'
+                )
             
         for col in cols:
             how_map[col] = how     
@@ -719,16 +755,18 @@ class DataProcessor:
 
     def _validate_ci_args(
         self,
-        how: str,
+        method: str,
         alpha: float,
+        valid_methods: set[str],
     ) -> tuple[str, float]:
         """Validate the arguments given to compute_ci().
 
         Additionally converts the string argument to 'how' to lowercase before validating.
 
         Args:
-            how (str): The desired CI-calculation strategy.
+            method (str): The desired CI-calculation strategy.
             alpha (float): The desired alpha.
+            valid_methods (set[str]): A set of valid methods.
 
         Raises:
             ValueError: If string argument for 'how' isn't recognized.
@@ -737,177 +775,234 @@ class DataProcessor:
         Returns:
             tuple[str, float]: A tuple 'how' (lowercase) and 'alpha'.
         """
-        
-        valid_hows = {'z', 't', 'wald', 'wilson', 'bootstrap', 'clopper-pearson'}
 
-        how = how.lower()
+        method = method.lower()
 
-        if how not in valid_hows:
-            raise ValueError(f'Unrecognized argument for how: \'{how}\'. Supported choices: {valid_hows}')
+        if method not in valid_methods:
+            raise ValueError(f'Unrecognized argument for how: \'{method}\'. Supported choices: {valid_methods}')
         
         if not (0 < alpha < 1):
-            raise ValueError(f'Invalid argument for alpha: \'{alpha}\'. Values should be greater than 0 and less than 1. Typical values might be in the range of 0.01 to 0.1.')
+            raise ValueError(
+                f'Invalid argument for alpha: \'{alpha}\'. Values should be greater than 0 '
+                'and less than 1. Typical values might be in the range of 0.01 to 0.1.'
+            )
         
         elif alpha < 0.01 or alpha > 0.1:
-            warnings.warn(f'Argument for alpha is outside of the typical range: \'{alpha}\'. Typical values might be in the range of 0.01 to 0.1')
+            warnings.warn(
+                f'Argument for alpha is outside of the typical range: \'{alpha}\'. '
+                'Typical values might be in the range of 0.01 to 0.2'
+            )
 
-        return how, alpha
+        return method, alpha
+    
+    def _create_ci_frame(
+        self,
+        cols: list[str],
+        point_estimates: np.ndarray,
+        lower_bounds: np.ndarray,
+        upper_bounds: np.ndarray,
+        counts: np.ndarray,
+    ) -> pd.DataFrame:
+        """Package CI-calculation results into a DataFrame.
 
-    def _ci_z(
+        Args:
+            cols (list[str]): The labels associated with each column.
+            point_estimates (np.ndarray): The array of point estimates.
+            lower_bounds (np.ndarray): The array of lower bounds.
+            upper_bounds (np.ndarray): The array of upper bounds.
+            counts (np.ndarray): The array of column non-nan counts.
+
+        Returns:
+            pd.DataFrame: A DataFrame with columns matching those in 'cols' 
+                and indices 'point_estimate', 'lower', 'upper', 'count'.
+        """
+        
+        result_matrix = np.vstack([
+            point_estimates,
+            lower_bounds,
+            upper_bounds,
+            counts,
+        ]) 
+
+        result = pd.DataFrame(
+            data = result_matrix,
+            columns = cols,
+            index = ['point_estimate', 'lower', 'upper', 'count'],
+            dtype = float,
+        )
+
+        return result
+        
+
+    def _calc_ci_parametric(
         self,
         df: pd.DataFrame,
         cols: list[str],
         alpha: float,
-        two_tailed: bool,
+        distribution: str,
     ) -> pd.DataFrame:
-        """Calculate Z-distribution confidence intervals.
+        """Calculate parametric confidence intervals.
 
         Args:
             df (pd.DataFrame): The DataFrame.
             cols (list[str]): Columns on which to operate.
             alpha (float): The desired alpha.
-            two_tailed (bool): If true, splits the alpha between the lower and upper tails.
+            distribution (str): The distribution to use. Supported choices: 'z', 't'
 
         Returns:
-            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 'mean', 'std', 'count', 'lower', 'upper'.
+            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 
+                'point_estimate', 'lower', 'upper', 'count'.
         """
-        
-        if two_tailed:
-            alpha = alpha / 2
-        
-        result = df[cols].agg(['mean', 'std', 'count'], axis = 0)
-        
-        crit_z = scipy.stats.norm.ppf(q = 1 - alpha)
 
-        se = result.loc['std'] / np.sqrt(result.loc['count'])
-        moe = crit_z * se
+        stats = df[cols].agg(['mean', 'std', 'count'], axis = 0)
+        standard_error = stats.loc['std'] / np.sqrt(stats.loc['count'])
 
-        result.loc['lower'] = result.loc['mean'] - moe
-        result.loc['upper'] = result.loc['mean'] + moe
+        if distribution == 'z':
+            if np.any(stats.loc['count'] <= 30):
+                warnings.warn(
+                    f'The sample size for at least one column was <= 30. '
+                    'You may consider using the t distribution for CI-calculation instead.'
+                )
 
-        return result
+            lower, upper = scipy.stats.norm.interval(
+                confidence = 1 - alpha,
+                loc = stats.loc['mean'],
+                scale = standard_error,
+            )
 
-    def _ci_wald(
+        elif distribution == 't':
+            lower, upper = scipy.stats.t.interval(
+                confidence = 1 - alpha,
+                df = stats.loc['count'] - 1, 
+                loc = stats.loc['mean'],
+                scale = standard_error,
+            )
+
+
+        return self._create_ci_frame(
+            cols, 
+            stats.loc['mean'].values, # type: ignore
+            lower, # type: ignore
+            upper, # type: ignore
+            stats.loc['count'].values, # type: ignore
+        )
+
+    def _calc_ci_proportion(
         self,
         df: pd.DataFrame,
         cols: list[str],
         alpha: float,
-        two_tailed: bool,
+        method: str,
     ) -> pd.DataFrame:
-        """Calculate Wald confidence intervals.
+        """Calculate proportion confidence intervals.
 
         Args:
             df (pd.DataFrame): The DataFrame.
             cols (list[str]): Columns on which to operate.
             alpha (float): The desired alpha.
-            two_tailed (bool): If true, splits the alpha between the lower and upper tails.
-
-        Note:
-            Since Wald confidence intervals are calculated for proportions, the 'std' row will be filled with np.nan to avoid confusion.
+            method (str): The CI-calculation strategy. Supported choices: 'wald', 
+                'wilson', 'agresti_coull', 'clopper_pearson' (or 'beta'), 'jeffreys'
 
         Returns:
-            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 'mean', 'std', 'count', 'lower', 'upper'.
+            pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and 
+                indices 'point_estimate', 'lower', 'upper', 'count'.
         """
+
+        sm_mapping = {
+            'wald': 'normal',
+            'wilson': 'wilson',
+            'agresti_coull': 'agresti_coull',
+            'clopper_pearson': 'beta',
+            'beta': 'beta',
+            'jeffreys': 'jeffreys'
+        }
         
-        if two_tailed:
-            alpha = alpha / 2
+        stats = df[cols].agg(['mean', 'count', 'sum'], axis = 0)
         
-        result = df[cols].agg(['mean', 'std', 'count'], axis = 0)
-        result.loc['std'] = np.nan
-        
-        crit_z = scipy.stats.norm.ppf(q = 1 - alpha)
+        lower, upper = proportion_confint(
+            count = stats.loc['sum'].values,
+            nobs = stats.loc['count'].values,
+            alpha = alpha,
+            method = sm_mapping[method],    
+        )
 
-        se = np.sqrt((result.loc['mean'] * (1 - result.loc['mean'])) / result.loc['count'])
-        moe = crit_z * se
+        return self._create_ci_frame(
+            cols,
+            stats.loc['mean'].values, # type: ignore
+            lower, # type: ignore
+            upper, # type: ignore
+            stats.loc['count'].values, # type: ignore
+        )
 
-        result.loc['lower'] = result.loc['mean'] - moe
-        result.loc['upper'] = result.loc['mean'] + moe
-
-        return result
-
-    def compute_ci(
+    def calc_ci(
         self,
         df: pd.DataFrame,
-        how: str,
+        method: str,
         alpha: float = 0.05,
-        two_tailed: bool = True,
         bonferroni: bool = False,
         cols: list[str] | str | None = None,
         prefix: str | None = None,
         suffix: str | None = None,
         pattern: str | re.Pattern | None = None,       
     ) -> pd.DataFrame:
-        """Compute confidence intervals according to the given strategy.
+        """Calculate confidence intervals according to the given strategy.
         
         Also includes associated statistics used in the calcualtion.
 
         Args:
             df (pd.DataFrame): The DataFrame.
-            how (str, optional): The CI-calculation strategy. Supported choices: 'z', 't', 'wald', 'wilson', 'bootstrap', 'clopper-pearson'. 
+            method (str, optional): The CI-calculation strategy. Supported choices: 
+                * Parametric: 'z', 't'
+                * Proportion: 'wald', 'wilson', 'agresti_coull', 'clopper_pearson' (or 'beta'), 'jeffreys'
+                * Bootstrap: 'bootstrap-bca', 'bootstrap-percentile', 'bootstrap-basic'
             alpha (float, optional): The desired alpha. Defaults to 0.05.
-            two_tailed (bool, optional): If true, splits the alpha between the lower and upper tails. Defaults to True.
-            bonferroni (bool, optional): If true, applies a Bonferroni correction based on the number of columns. Defaults to False.
+            bonferroni (bool, optional): If true, applies a Bonferroni correction based on the 
+                number of columns. Defaults to False.
             cols (list[str] | str | None, optional): Column(s) on which to operate.
                 If None, includes all columns. Defaults to None.
             prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
             suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+            pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which
+                to operate. Defaults to None.
 
         Raises:
             NotImplementedError: If the CI-calcualtion strategy is not yet implemented.
 
-        Notes:
-            * Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
+        Note:
+            Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
             taking the intersection of matching columns. In other words, only columns matching all selection
             criteria will be selected.
-            * For CI-calculation strategies that are intended for proportions (e.g., Wald), the 'std' row of the
-            resulting DataFrame will contain np.nan to avoid confusion.
+
 
         Returns:
             pd.DataFrame: A DataFrame with columns matching those specified in the column-selection parameters 
-                and indices 'mean', 'std', 'count', 'lower', 'upper'.
+                and indices 'point_estimate', 'lower', 'upper', 'count'.
         """
         
         df, cols = self._prep_args(df, cols, prefix, suffix, pattern)
 
-        how, alpha = self._validate_ci_args(how, alpha)
+        parametric_methods = {'z', 't'}
+        proportion_methods = {'wald', 'wilson', 'agresti_coull', 'clopper_pearson', 'beta', 'jeffreys'}
+        bootstrap_methods = {'bootstrap-bca', 'bootstrap-percentile', 'bootstrap-basic'}
+
+        method, alpha = self._validate_ci_args(method, alpha, parametric_methods | proportion_methods | bootstrap_methods)
 
         if bonferroni:
             alpha = alpha / len(cols)
 
-        result = pd.DataFrame(
-            columns = cols,
-            index = ['mean', 'std', 'count', 'lower', 'upper']
-        )
+        if method in parametric_methods:
+            result = self._calc_ci_parametric(df, cols, alpha, method)
 
-        if how == 'z':
-            result = self._ci_z(df, cols, alpha, two_tailed)
+        elif method in proportion_methods:
+            result = self._calc_ci_proportion(df, cols, alpha, method)
 
-        elif how == 't':
-            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
-            #result = self._ci_t(df, cols, alpha, two_tailed)
-            # TODO: Implement CI-calculation strategy.
-
-        elif how == 'wald':
-            result = self._ci_wald(df, cols, alpha, two_tailed)
-
-        elif how == 'wilson':
-            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
-            #result = self._ci_wilson(df, cols, alpha, two_tailed)
-            # TODO: Implement CI-calculation strategy.
-
-        elif how == 'bootstrap':
-            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
-            #result = self._ci_bootstrap(df, cols, alpha, two_tailed)
-            # TODO: Implement CI-calculation strategy.
-
-        elif how == 'clopper-pearson':
-            raise NotImplementedError(f'CI-calcualtion strategy \'{how}\' is not yet implemented.')
-            #result = self._ci_clopper_pearson(df, cols, alpha, two_tailed)
-            # TODO: Implement CI-calculation strategy.
+        elif method in bootstrap_methods:
+            raise NotImplementedError(f'CI-calcualtion strategy \'{method}\' is not yet implemented.')
+            #result = self._ci_bootstrap(df, cols, alpha)
+            # TODO: Implement bootstrap strategy using scipy.stats.bootstrap
 
         else:
-            raise ValueError(f'CI-calcualtion strategy \'{how}\' is not recognized. Supported choices: \'z\', \'t\', \'wilson\', \'bootstrap\', \'clopper-pearson\'.')
+            raise ValueError(f'CI-calcualtion strategy \'{method}\' is not recognized.')
 
         return result  
 

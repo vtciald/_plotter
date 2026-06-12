@@ -561,6 +561,30 @@ def test_compute_ci_bootstrap_percentile():
 
     pd.testing.assert_frame_equal(result, expected)
 
+def test_compute_ci_bootstrap_bca_median():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': [5, 13, 73, 84, 65, 83, 85, 12, 32, 53, 85, 45, 47, 23, 57, 59, 60, 23],
+        'Col2': [7, 3, 7, 9, 3, 1, 74, 62, 76, 6, 34, 68, 96, 34, 86, 90, 52, 745],
+    })
+
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [55.0, 43.0],
+            'lower': [32.0, 7.0],
+            'upper': [69.0, 74.0],
+            'count': [18, 18],
+        },
+        index = ['Col1', 'Col2'],
+    )
+
+    result = dp.calc_ci(test_df, method = 'bootstrap_bca', metric = 'median')
+    result = result.round(4)
+
+    pd.testing.assert_frame_equal(result, expected)
+
 # Test column aggregation
 test_agg_cols_mean()
 test_agg_cols_std()
@@ -591,3 +615,4 @@ test_compute_ci_jeffreys()
 test_compute_ci_bootstrap_bca()
 test_compute_ci_bootstrap_basic()
 test_compute_ci_bootstrap_percentile()
+test_compute_ci_bootstrap_bca_median()

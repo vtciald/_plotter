@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 from statsmodels.stats.proportion import proportion_confint
+from typing import Callable, Union
 import re
 from . import prep
 
@@ -368,10 +369,8 @@ def _calc_ci_bootstrap(
     uppers = []
     counts = []
 
+    metric, metric_func = _get_metric_bootstrap(metric)
     stats = df[cols].agg([f'{metric}', 'count', 'sum'], axis = 0)
-    metric_func = np.mean
-    if metric == 'median':
-        metric_func = np.median
     
     for col in cols:
         data = df[col].dropna().values
@@ -397,8 +396,28 @@ def _calc_ci_bootstrap(
 
     return _create_ci_frame(
         cols,
-        stats.loc['mean'].values, # type: ignore
-        np.array(lowers), # type: ignore
-        np.array(uppers), # type: ignore
-        stats.loc['count'].values, # type: ignore
+        np.array(point_estimates),
+        np.array(lowers),
+        np.array(uppers),
+        np.array(counts),
     )
+
+def _get_metric_bootstrap(
+    metric: str,
+) -> tuple[str, Callable[[np.ndarray], float]]:
+    
+    metric = metric.lower()
+    
+    if metric == 'mean':
+        metric_func = np.mean
+    
+    elif metric == 'median':
+        metric_func = np.median
+
+    else:
+        raise ValueError(
+            f'Metric argument \'{metric}\' isn\'t recognized. '
+            'Supported choices: \'mean\', \'median\'.'
+        )
+    
+    return metric, metric_func

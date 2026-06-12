@@ -607,7 +607,7 @@ def test_rename_cols_extract():
         'Col2': ['Not at all', 'Somewhat', 'Totally'],
     })
 
-    mapper_regex = r'^(.+):.+'
+    mapper_regex = r'(^.+):.+'
     result = dp.rename_cols(test_df, mapper_regex)
 
     pd.testing.assert_frame_equal(result, expected)

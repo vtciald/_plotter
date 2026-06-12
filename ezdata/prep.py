@@ -671,8 +671,8 @@ def _standardize_extract_mapper(
 
     if n_capture_groups != 1:
         raise ValueError(
-            f'Regex pattern `mapper` had {n_capture_groups} but exactly 1 '
-            'is required to determine what to extract.'
+            f'Regex pattern `mapper` had {n_capture_groups} capture groups '
+            'but exactly 1 is required to determine what to extract.'
         )
     
     new_mapper = {}

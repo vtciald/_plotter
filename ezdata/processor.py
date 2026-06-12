@@ -17,6 +17,7 @@ class DataProcessor:
     clean_df = staticmethod(prep.clean_df)
     rename_cols = staticmethod(prep.rename_cols)
     remove_cols = staticmethod(prep.remove_cols)
+    recode_vals = staticmethod(prep.recode_vals)
     remove_verbal_anchors = staticmethod(prep.remove_verbal_anchors)
     bin = staticmethod(prep.bin)
     filter_by_bounds = staticmethod(prep.filter_by_bounds)

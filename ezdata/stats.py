@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 from statsmodels.stats.proportion import proportion_confint
-from typing import Callable, Union
+from typing import Callable
 import re
 from . import prep
 
@@ -286,10 +286,10 @@ def _calc_ci_parametric(
 
     return _create_ci_frame(
         cols, 
-        stats.loc['mean'].values, # type: ignore
-        lower, # type: ignore
-        upper, # type: ignore
-        stats.loc['count'].values, # type: ignore
+        stats.loc['mean'].to_numpy(),
+        np.array(lower),
+        np.array(upper),
+        stats.loc['count'].to_numpy(),
     )
 
 def _calc_ci_proportion(
@@ -322,18 +322,18 @@ def _calc_ci_proportion(
     stats = df[cols].agg(['mean', 'count', 'sum'], axis = 0)
     
     lower, upper = proportion_confint(
-        count = stats.loc['sum'].values,
-        nobs = stats.loc['count'].values,
+        count = stats.loc['sum'].to_numpy(),
+        nobs = stats.loc['count'].to_numpy(),
         alpha = alpha,
         method = sm_mapping[method],    
     )
 
     return _create_ci_frame(
         cols,
-        stats.loc['mean'].values, # type: ignore
-        lower, # type: ignore
-        upper, # type: ignore
-        stats.loc['count'].values, # type: ignore
+        stats.loc['mean'].to_numpy(),
+        np.array(lower),
+        np.array(upper),
+        stats.loc['count'].to_numpy(),
     )
 
 def _calc_ci_bootstrap(
@@ -373,7 +373,7 @@ def _calc_ci_bootstrap(
     stats = df[cols].agg([f'{metric}', 'count', 'sum'], axis = 0)
     
     for col in cols:
-        data = df[col].dropna().values
+        data = df[col].dropna().to_numpy()
         point_estimates.append(stats[col].loc[f'{metric}'])
         counts.append(stats[col].loc['count'])
 

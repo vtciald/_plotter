@@ -2,7 +2,7 @@ import pandas as pd
 import warnings
 import re
 
-FIX_CHAR_MAP = str.maketrans({
+_FIX_CHAR_MAP = str.maketrans({
     '’': "'",
     '‘': "'",
     '“': '"',
@@ -17,8 +17,8 @@ FIX_CHAR_MAP = str.maketrans({
 })
 
 PATTERN_ALIDA_OTHER_OE = re.compile(r'other.*_0$', re.IGNORECASE)
-PATTERN_LEADING_INT = re.compile(r'^(\d+)', re.IGNORECASE)
-PATTERN_BIN_METHOD = re.compile(r'(?P<kind>i|q)(?P<number>\d+\.?\d*)', re.IGNORECASE)
+PATTERN_CAPTURE_LEADING_INT = re.compile(r'^(\d+)', re.IGNORECASE)
+_PATTERN_BIN_METHOD = re.compile(r'(?P<kind>i|q)(?P<number>\d+\.?\d*)', re.IGNORECASE)
 
 def remove_cols(
     df: pd.DataFrame, 
@@ -52,7 +52,7 @@ def remove_cols(
 
 def rename_cols(
     df: pd.DataFrame,
-    mapper: dict,
+    mapper: dict | str | re.Pattern,
     *,
     regex_keys: bool = False,
     cols: list[str] | set[str] | str | None = None,
@@ -64,7 +64,7 @@ def rename_cols(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to desired column names.
+        mapper (dict | str | re.Pattern): A dictionary mapping existing column names to desired column names. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting column names.
         regex_keys (bool, optional): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
         cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
@@ -77,11 +77,59 @@ def rename_cols(
     Returns:
         pd.DataFrame: The DataFrame with renamed columns.
     """
-    
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
-    mapper = _stringify_mapper(mapper, regex_keys, cols)
 
-    df = df.rename(columns = mapper)
+    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+
+    df = _recode(
+        df, 
+        cols,
+        'columns', 
+        mapper, 
+        regex_keys = regex_keys,
+    )
+    
+    return df
+
+def recode_vals(
+    df: pd.DataFrame,
+    mapper: dict | str | re.Pattern,
+    *,
+    new_col_prefix: str | None = None,
+    regex_keys: bool = False,
+    cols: list[str] | set[str] | str | None = None,
+    prefix: str | None = None,
+    suffix: str | None = None,
+    pattern: str | re.Pattern | None = None,
+) -> pd.DataFrame:
+    """Recode DataFrame values according to the given mapper.
+
+    Args:
+        df (pd.DataFrame): The DataFrame.
+        mapper (dict | str | re.Pattern): A dictionary mapping existing values to desired values. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting values.
+        new_col_prefix (str | None, optional): A prefix to add to new columns with the potentially-recoded values. If None, will not create new columns. Defaults to None.
+        regex_keys (bool, optional): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
+        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
+        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+
+    Note:
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+
+    Returns:
+        pd.DataFrame: The DataFrame with renamed columns.
+    """
+
+    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+
+    df = _recode(
+        df, 
+        cols,
+        'values', 
+        mapper, 
+        new_col_prefix = new_col_prefix,
+        regex_keys = regex_keys,
+    )
     
     return df
 
@@ -113,14 +161,14 @@ def clean_df(
 
     df, cols = _prep_args(df, cols, prefix, suffix, pattern)
 
-    rename_dict = {col: str(col).translate(FIX_CHAR_MAP).strip() for col in cols}
+    rename_dict = {col: str(col).translate(_FIX_CHAR_MAP).strip() for col in cols}
     df = df.rename(columns = rename_dict)
 
     updated_cols = rename_dict.values()
     str_cols = df[updated_cols].select_dtypes(include=['object', 'string']).columns
     
     for col in str_cols:
-        df[col] = df[col].str.translate(FIX_CHAR_MAP).str.strip()
+        df[col] = df[col].str.translate(_FIX_CHAR_MAP).str.strip()
 
     return df
 
@@ -137,7 +185,7 @@ def clean_arg(
     """
 
     if isinstance(arg, str):
-        return arg.translate(FIX_CHAR_MAP).strip()
+        return arg.translate(_FIX_CHAR_MAP).strip()
     
     elif isinstance(arg, list):
         return [clean_arg(val) for val in arg]
@@ -175,10 +223,16 @@ def remove_verbal_anchors(
 
     df, cols = _prep_args(df, cols, prefix, suffix, pattern)
 
-    str_cols = df[cols].select_dtypes(include=['object', 'string']).columns
+    str_cols = list(df[cols].select_dtypes(include=['object', 'string']).columns)
+
+    df = _recode(
+        df,
+        str_cols,
+        'values',
+        PATTERN_CAPTURE_LEADING_INT,
+    )
 
     for col in str_cols:
-        df[col] = df[col].astype(str).str.extract(PATTERN_LEADING_INT)[0]
         df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64')
 
     return df
@@ -357,7 +411,7 @@ def _bin_by_string(
         pd.DataFrame: The binned DataFrame.
     """
 
-    method_match = re.match(PATTERN_BIN_METHOD, method)
+    method_match = re.match(_PATTERN_BIN_METHOD, method)
 
     if not method_match: 
         raise ValueError(
@@ -459,35 +513,174 @@ def _prep_args(
     
     return df, matched_cols
 
-def _stringify_mapper(
-    mapper: dict[str | re.Pattern, str],
-    regex_keys: bool,
+def _recode(
+    df: pd.DataFrame,
     cols: list[str],
-) -> dict[str, str]:
-    """Standardize mapper argument to a dictionary of strings.
+    target: str,
+    mapper: dict | str | re.Pattern,
+    *,
+    regex_keys: bool = False,
+    new_col_prefix: str | None = None,
+) -> pd.DataFrame:
+    """Recode column names or values.
+
+    Helper function used across multiple public functions (e.g., rename_cols, recode_vals).
 
     Args:
-        mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex patterns to strings.
-        regex_keys (bool): Whether to treat string keys of `mapper` as regex patterns.
-        cols (list[str]): A list of column names on which to operate.
+        df (pd.DataFrame): The DataFrame.
+        cols (list[str]): The columns on which to operate.
+        target (str): The target of recoding. Supported choices: 'columns', 'values'.
+        mapper (dict | str | re.Pattern): A dictionary mapping existing values to desired values. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting values.
+        regex_keys (bool): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
+        new_col_prefix (str | None, optional): A prefix to add to new columns with the potentially-recoded values. If None, will not create new columns. Defaults to None.
 
     Returns:
-        dict[str, str]: The updated mapper.
+        pd.DataFrame: The DataFrame with recoded columns or values.
+    """
+
+    mapper = _standardize_mapper(df, cols, mapper, target, regex_keys)
+
+    if new_col_prefix is not None:
+        dest_cols = [new_col_prefix + col for col in cols]
+
+    else:
+        dest_cols = cols
+
+    if target == 'columns':
+        df = df.rename(columns = mapper)
+
+    elif target == 'values':
+        df[dest_cols] = df[cols].replace(mapper).to_numpy()
+    
+    return df
+
+def _standardize_mapper(
+    df: pd.DataFrame,
+    cols: list[str],
+    mapper: dict | str | re.Pattern,
+    target: str,
+    regex_keys: bool, 
+):
+    """Standardize a mapper argument.
+
+    Helper function to _recode.
+
+    Args:
+        df (pd.DataFrame): The DataFrame
+        cols (list[str]): The columns on which to operate.
+        mapper (dict | str | re.Pattern): A dictionary mapping existing values to desired values. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting values.
+        target (str): The target of recoding. Supported choices: 'columns', 'values'.
+        regex_keys (bool): Whether to treat string keys of `mapper` as regex patterns.
+
+    Raises:
+        ValueError: If `target` is an unsupported value.
+        ValueError: If `mapper` is an unsupported type.
+
+    Returns:
+        dict: The standardized mapper.
     """
     
+    if target == 'columns':
+        values_to_map = set(cols)
+
+    elif target == 'values':
+        values_to_map = set()
+        
+        for col in cols:
+            values_to_map.update(df[col].unique())
+
+    else:
+        raise ValueError(
+            f'Mapping `target` \'{target}\' isn\'t supported. '
+            'Supported choices: \'columns\', \'values\'.'
+        )
+    
+    values_to_map = list(values_to_map)
+    
+    if isinstance(mapper, dict):
+        mapper = _standardize_dict_mapper(mapper, values_to_map, regex_keys)
+
+    elif isinstance(mapper, str) or isinstance(mapper, re.Pattern):
+        mapper = _standardize_extract_mapper(mapper, values_to_map)
+
+    else:
+        raise ValueError(
+            f'`mapper` must be a string, compiled regex pattern, or a dictionary. '
+            f'Received {type(mapper)}'
+        )
+    
+    return mapper   
+
+def _standardize_dict_mapper(
+    mapper: dict,
+    values_to_map: list,
+    regex_keys: bool,
+) -> dict:
+    """Standardize dictionary mapper argument.
+
+    Helper function to _standardize_mapper.
+
+    Args:
+        mapper (dict): A dictionary mapping existing values and/or regex patterns to new values.
+        values_to_map (list): A list of values from which to create a map.
+        regex_keys (bool): Whether to treat string keys of `mapper` as regex patterns.
+
+    Returns:
+        dict: The updated mapper.
+    """
+      
     new_mapper = {}
     
     for k, v in mapper.items():
-
         if isinstance(k, re.Pattern) or regex_keys == True:
             if isinstance(k, str):
                 k = re.compile(k)
 
-            for col in cols:
-                if re.search(k, col):
-                    new_mapper[col] = v
+            for val in values_to_map:
+                if re.search(k, str(val)):
+                    new_mapper[val] = v
 
         else:
             new_mapper[k] = v
             
     return new_mapper
+
+def _standardize_extract_mapper(
+    mapper: str | re.Pattern,
+    values_to_map: list
+) -> dict:
+    """Standardize string or regex pattern mapper argument.
+
+    Helper function to _standardize_mapper.
+
+    Args:
+        mapper (str | re.Pattern): A regex pattern with a single capture group to define what to extract from exisiting values
+        values_to_map (list): A list of values from which to create a map.
+
+    Raises:
+        ValueError: If `mapper` has less than or greater than 1 capture group.
+
+    Returns:
+        dict: The updated mapper.
+    """
+    
+    if isinstance(mapper, str):
+        mapper = re.compile(mapper)
+
+    n_capture_groups = mapper.groups
+
+    if n_capture_groups != 1:
+        raise ValueError(
+            f'Regex pattern `mapper` had {n_capture_groups} but exactly 1 '
+            'is required to determine what to extract.'
+        )
+    
+    new_mapper = {}
+
+    for val in values_to_map:
+        match = re.search(mapper, str(val))
+
+        if match:
+            new_mapper[val] = match.group(1)
+
+    return new_mapper    

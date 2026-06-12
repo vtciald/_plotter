@@ -136,7 +136,7 @@ def _one_sample_t(
     desc = df[cols].agg(['count', 'mean'], axis = 0)
 
     result = scipy.stats.ttest_1samp(
-        df[cols].values,
+        df[cols].to_numpy(),
         popmean = null,
         alternative = 'two-sided',
         nan_policy = 'omit'
@@ -144,9 +144,9 @@ def _one_sample_t(
     
     return _create_test_frame(
         cols,
-        desc.loc['mean'].values - null, # type: ignore
+        desc.loc['mean'].to_numpy() - null,
         result.pvalue, # type: ignore
-        desc.loc['count'].values, # type: ignore
+        desc.loc['count'].to_numpy(),
         alpha,
         'mean_diff',
     )
@@ -240,7 +240,7 @@ def _one_sample_wilcoxon(
     desc = df[cols].agg(['count', 'median'], axis = 0)
 
     result = scipy.stats.wilcoxon(
-        df[cols].values - null,
+        df[cols].to_numpy() - null,
         alternative = 'two-sided',
         zero_method = 'wilcox',
         nan_policy = 'omit', # type: ignore
@@ -248,9 +248,9 @@ def _one_sample_wilcoxon(
     
     return _create_test_frame(
         cols,
-        desc.loc['median'].values - null, # type: ignore
+        desc.loc['median'].to_numpy() - null,
         result.pvalue, # type: ignore
-        desc.loc['count'].values, # type: ignore
+        desc.loc['count'].to_numpy(),
         alpha,
         'median_diff'
     )

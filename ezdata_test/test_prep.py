@@ -144,6 +144,76 @@ def test_remove_verbal_anchors_cols():
 
     pd.testing.assert_frame_equal(result, expected)
 
+def test_recode_values():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': ['Not at all', 'Somewhat', 'Totally'],
+        'Col2': ['Not at all', 'Somewhat', 'Totally'],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [1, 2, 'Three'],
+        'Col2': ['Not at all', 'Somewhat', 'Totally'],
+    })
+
+    mapper = {
+        'Not at.*': 1,
+        'Somewhat': 2,
+        'Totally': 'Three',
+    }
+    result = dp.recode_vals(test_df, mapper, regex_keys = True, suffix = '1')
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_recode_values_new_col():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': ['Not at all', 'Somewhat', 'Totally'],
+        'Col2': ['Not at all', 'Somewhat', 'Totally'],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': ['Not at all', 'Somewhat', 'Totally'],
+        'Col2': ['Not at all', 'Somewhat', 'Totally'],
+        'rc_Col1': [1, 2, 'Three'],
+    })
+
+    mapper = {
+        'Not at.*': 1,
+        'Somewhat': 2,
+        'Totally': 'Three',
+    }
+    result = dp.recode_vals(test_df, mapper, new_col_prefix = 'rc_', regex_keys = True, suffix = '1')
+
+    pd.testing.assert_frame_equal(result, expected)
+
+def test_recode_values_extract():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1': ['1 - Not at all', 2, 3, 4, '5 - Totally'],
+        'Col2': ['1: Something low', '2', '3', '4', '10: Something high'],
+        'Col3': ['1 (Something else low)', 2, 3, 4, '5 (Something else high'],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': [1, 2, 3, 4, 5],
+        'Col2': [1, 2, 3, 4, 10],
+        'Col3': ['1 (Something else low)', 2, 3, 4, '5 (Something else high'],
+    }).astype({
+        'Col1': 'Int64',
+        'Col2': 'Int64'
+    })
+
+    result = dp.remove_verbal_anchors(test_df, cols = ['Col1', 'Col2'])
+
+    pd.testing.assert_frame_equal(result, expected)
+
 def test_filter_straightliners():
 
     dp = DataProcessor()
@@ -523,6 +593,25 @@ def test_rename_cols_duplicate():
 
     pd.testing.assert_frame_equal(result, expected)
 
+def test_rename_cols_extract():
+
+    dp = DataProcessor()
+
+    test_df = pd.DataFrame({
+        'Col1: Extra stuff here': ['Not at all', 'Somewhat', 'Totally'],
+        'Col2: Something else': ['Not at all', 'Somewhat', 'Totally'],
+    })
+
+    expected = pd.DataFrame({
+        'Col1': ['Not at all', 'Somewhat', 'Totally'],
+        'Col2': ['Not at all', 'Somewhat', 'Totally'],
+    })
+
+    mapper_regex = r'^(.+):.+'
+    result = dp.rename_cols(test_df, mapper_regex)
+
+    pd.testing.assert_frame_equal(result, expected)
+
 # Standardizing characters in arguments
 test_clean_arg()
 
@@ -566,3 +655,8 @@ test_rename_cols()
 test_rename_cols_regex_arg()
 test_rename_cols_regex_pattern()
 test_rename_cols_duplicate()
+test_rename_cols_extract()
+
+# Test recoding values
+test_recode_values()
+test_recode_values_new_col()

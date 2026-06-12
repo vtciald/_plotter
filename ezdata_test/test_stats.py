@@ -333,11 +333,14 @@ def test_compute_ci_z():
         'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5, 0.1296, 0.8704, 8],
-        'Col2': [1.875, 0.4197, 3.3303, 8],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5, 1.875],
+            'lower': [0.1296, 0.4197],
+            'upper': [0.8704, 3.3303],
+            'count': [8, 8],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1', 'Col2'],
     )
 
     result = dp.calc_ci(test_df, method = 'z')
@@ -354,11 +357,14 @@ def test_compute_ci_t():
         'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5, 0.0531, 0.9469, 8],
-        'Col2': [1.875, 0.1192, 3.6308, 8],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5, 1.875],
+            'lower': [0.0531, 0.1192],
+            'upper': [0.9469, 3.6308],
+            'count': [8, 8],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1', 'Col2'],
     )
 
     result = dp.calc_ci(test_df, method = 't')
@@ -375,10 +381,14 @@ def test_compute_ci_wald():
         'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5, 0.1535, 0.8465, 8],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5],
+            'lower': [0.1535],
+            'upper': [0.8465],
+            'count': [8],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1'],
     )
 
     result = dp.calc_ci(test_df, method = 'wald', cols = 'Col1')
@@ -395,10 +405,14 @@ def test_compute_ci_wilson():
         'Col2': [7, 2, 1, 1, 1, 1, 1, 1],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5, 0.2152, 0.7848, 8],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5],
+            'lower': [0.2152],
+            'upper': [0.7848],
+            'count': [8],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1'],
     )
 
     result = dp.calc_ci(test_df, method = 'wilson', cols = 'Col1')
@@ -414,10 +428,14 @@ def test_compute_ci_ac():
         'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5333, 0.3011, 0.752, 15],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5333],
+            'lower': [0.3011],
+            'upper': [0.752],
+            'count': [15],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1'],
     )
 
     result = dp.calc_ci(test_df, method = 'agresti_coull')
@@ -433,10 +451,14 @@ def test_compute_ci_cp():
         'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5333, 0.2659, 0.7873, 15],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5333],
+            'lower': [0.2659],
+            'upper': [0.7873],
+            'count': [15],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1'],
     )
 
     result = dp.calc_ci(test_df, method = 'clopper_pearson')
@@ -452,10 +474,14 @@ def test_compute_ci_jeffreys():
         'Col1': [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [0.5333, 0.2939, 0.7612, 15],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [0.5333],
+            'lower': [0.2939],
+            'upper': [0.7612],
+            'count': [15],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1'],
     )
 
     result = dp.calc_ci(test_df, method = 'jeffreys')
@@ -472,11 +498,14 @@ def test_compute_ci_bootstrap_bca():
         'Col2': [7, 3, 7, 9, 3, 1, 74, 62, 76, 6, 34, 68, 96, 34, 86, 90, 52, 745],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [50.2222, 37.6752, 61.5, 18],
-        'Col2': [80.7222, 35.6667, 207.4474, 18],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [50.222, 80.7222],
+            'lower': [37.6752, 35.6667],
+            'upper': [61.5, 207.4474],
+            'count': [18, 18],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1', 'Col2'],
     )
 
     result = dp.calc_ci(test_df, method = 'bootstrap_bca')
@@ -493,11 +522,14 @@ def test_compute_ci_bootstrap_basic():
         'Col2': [7, 3, 7, 9, 3, 1, 74, 62, 76, 6, 34, 68, 96, 34, 86, 90, 52, 745],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [50.2222, 38.7208, 62.5569, 18],
-        'Col2': [80.7222, -3.6736, 133.0014, 18],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [50.222, 80.7222],
+            'lower': [38.7208, -3.6736],
+            'upper': [62.5569, 133.0014],
+            'count': [18, 18],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1', 'Col2'],
     )
 
     result = dp.calc_ci(test_df, method = 'bootstrap_basic')
@@ -514,11 +546,14 @@ def test_compute_ci_bootstrap_percentile():
         'Col2': [7, 3, 7, 9, 3, 1, 74, 62, 76, 6, 34, 68, 96, 34, 86, 90, 52, 745],
     })
 
-    expected = pd.DataFrame({
-        'Col1': [50.2222, 37.8875, 61.7236, 18],
-        'Col2': [80.7222, 28.4431, 165.1181, 18],
+    expected = pd.DataFrame(
+        {
+            'point_estimate': [50.222, 80.7222],
+            'lower': [37.8875, 28.4431],
+            'upper': [61.7236, 165.1181],
+            'count': [18, 18],
         },
-        index = ['point_estimate', 'lower', 'upper', 'count']
+        index = ['Col1', 'Col2'],
     )
 
     result = dp.calc_ci(test_df, method = 'bootstrap_percentile')

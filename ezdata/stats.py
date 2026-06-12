@@ -9,6 +9,7 @@ def agg_cols(
     df: pd.DataFrame,
     method: str,
     target_col: str,
+    *,
     drop_inputs: bool = False,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
@@ -17,29 +18,23 @@ def agg_cols(
 ) -> pd.DataFrame:
     """Aggregate across columns to create a new column.
 
-    Applies an aggregation function given by 'method' across columns (i.e., axis = 1). 
+    Applies an aggregation function given by `method` across columns (i.e., axis = 1). 
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        method (str): The aggregation method. Supported choices: 'min', 'max', 'sum', 'mean', 'median',
-            'count', 'std', 'var', 'prod', 'or', 'and'.
+        method (str): The aggregation method. Supported choices: 'min', 'max', 'sum', 'mean', 'median', 'count', 'std', 'var', 'prod', 'or', 'and'.
         target_col (str): The target column name in which to store the aggregated values.
-        drop_inputs (bool): If true, drops the columns used in aggregation (i.e., those indicated 
-            by 'cols'). Defaults to False.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate.
-            If None, includes all columns. Defaults to None.
+        drop_inputs (bool): If true, drops the columns used in aggregation (i.e., those indicated the column-selection parameters). Defaults to False.
+        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
         suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns 
-            to aggregate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
 
     Raises:
-        ValueError: If the aggregation method specified in 'method' isn't recognized.
+        ValueError: If the aggregation method specified in `method` isn't recognized.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with the aggregated values stored in the target column.
@@ -71,6 +66,7 @@ def agg_cols(
 def agg_rows(
     df: pd.DataFrame,
     method: str | list[str],
+    *,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
     suffix: str | None = None,
@@ -82,22 +78,17 @@ def agg_rows(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        method (str | list[str]): The aggregation method. Supported choices: 'min', 'max', 
-            'sum', 'mean', 'median', 'count', 'std', 'var', 'prod'.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate.
-            If None, includes all columns. Defaults to None.
+        method (str | list[str]): The aggregation method. Supported choices: 'min', 'max', 'sum', 'mean', 'median', 'count', 'std', 'var', 'prod'.
+        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
         suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns 
-            to aggregate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
 
     Raises:
-        ValueError: If a given aggregation method is unrecognized.
+        ValueError: If a given aggregation method in `method` isn't recognized.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame | pd.Series: The resulting DataFrame or Series.
@@ -129,6 +120,7 @@ def agg_rows(
 def calc_ci(
     df: pd.DataFrame,
     method: str,
+    *,
     alpha: float = 0.05,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
@@ -146,22 +138,16 @@ def calc_ci(
             * Proportion: 'wald', 'wilson', 'agresti_coull', 'clopper_pearson' (or 'beta'), 'jeffreys'
             * Bootstrap: 'bootstrap_bca', 'bootstrap_percentile', 'bootstrap_basic'
         alpha (float, optional): The desired alpha. Defaults to 0.05.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which
-            to operate. Defaults to None.
-
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+        
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
-
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns matching those specified in the column-selection parameters 
-            and indices 'point_estimate', 'lower', 'upper', 'count'.
+        pd.DataFrame: A DataFrame with indices matching the columns specified in the column-selection parameters and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
     
     df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
@@ -185,9 +171,6 @@ def calc_ci(
     elif method in bootstrap_methods:
         result = _calc_ci_bootstrap(df, cols, alpha, method)
 
-    else:
-        raise ValueError(f'CI-calcualtion method \'{method}\' is not recognized.')
-
     return result
 
 def _validate_ci_args(
@@ -197,7 +180,7 @@ def _validate_ci_args(
 ) -> tuple[str, float]:
     """Validate the arguments given to compute_ci().
 
-    Additionally converts the string argument to 'method' to lowercase before validating.
+    Additionally converts the string argument to `method` to lowercase before validating.
 
     Args:
         method (str): The desired CI-calculation method.
@@ -205,11 +188,11 @@ def _validate_ci_args(
         valid_methods (set[str]): A set of valid methods.
 
     Raises:
-        ValueError: If string argument for 'method' isn't recognized.
-        ValueError: If float argument for 'alpha' isn't between 0 and 1 exclusive.
+        ValueError: If string argument for `method` isn't recognized.
+        ValueError: If float argument for `alpha` isn't between 0 and 1 exclusive.
 
     Returns:
-        tuple[str, float]: A tuple 'method' (lowercase) and 'alpha'.
+        tuple[str, float]: A tuple containing lowercase `method` and `alpha`.
     """
 
     method = method.lower()
@@ -242,22 +225,19 @@ def _create_ci_frame(
         counts (np.ndarray): The array of column non-nan counts.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns matching those in 'cols' 
-            and indices 'point_estimate', 'lower', 'upper', 'count'.
+        pd.DataFrame: A DataFrame with indices matching the labels in `cols` and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
     
-    result_matrix = np.vstack([
-        point_estimates,
-        lower_bounds,
-        upper_bounds,
-        counts,
-    ]) 
+    data_dict = {
+        'point_estimate': point_estimates.astype(float),
+        'lower': lower_bounds.astype(float),
+        'upper': upper_bounds.astype(float),
+        'count': counts.astype(int),
+    }
 
     result = pd.DataFrame(
-        data = result_matrix,
-        columns = cols,
-        index = ['point_estimate', 'lower', 'upper', 'count'],
-        dtype = float,
+        data = data_dict,
+        index = cols,
     )
 
     return result    
@@ -272,13 +252,12 @@ def _calc_ci_parametric(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str]): Columns on which to operate.
+        cols (list[str]): The columns on which to operate.
         alpha (float): The desired alpha.
         distribution (str): The distribution to use. Supported choices: 'z', 't'.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and indices 
-            'point_estimate', 'lower', 'upper', 'count'.
+        pd.DataFrame: A DataFrame with indices matching the labels in `cols` and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
 
     stats = df[cols].agg(['mean', 'std', 'count'], axis = 0)
@@ -318,14 +297,12 @@ def _calc_ci_proportion(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str]): Columns on which to operate.
+        cols (list[str]): The columns on which to operate.
         alpha (float): The desired alpha.
-        method (str): The CI-calculation method. Supported choices: 'wald', 
-            'wilson', 'agresti_coull', 'clopper_pearson' (or 'beta'), 'jeffreys'.
+        method (str): The CI-calculation method. Supported choices: 'wald', 'wilson', 'agresti_coull', 'clopper_pearson' (or 'beta'), 'jeffreys'.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and 
-            indices 'point_estimate', 'lower', 'upper', 'count'.
+        pd.DataFrame: A DataFrame with indices matching the labels in `cols` and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
 
     sm_mapping = {
@@ -365,16 +342,13 @@ def _calc_ci_bootstrap(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str]): Columns on which to operate.
+        cols (list[str]): The columns on which to operate.
         alpha (float): The desired alpha.
-        method (str): The CI-calculation method. Supported choices: 'bootstrap_bca', 
-            'bootstrap_percentile', 'bootstrap_basic'.
-        metric (str): The measure of central tendency to craft the interval around.
-            Supported choices: 'mean', 'median'. Defaults to 'mean'.
+        method (str): The CI-calculation method. Supported choices: 'bootstrap_bca', 'bootstrap_percentile', 'bootstrap_basic'.
+        metric (str): The measure of central tendency to craft the interval around. Supported choices: 'mean', 'median'. Defaults to 'mean'.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns matching those specified in 'cols' and 
-            indices 'point_estimate', 'lower', 'upper', 'count'.
+        pd.DataFrame: A DataFrame with indices matching the labels in `cols` and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
 
     sp_mapping = {

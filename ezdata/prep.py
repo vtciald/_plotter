@@ -22,6 +22,7 @@ PATTERN_BIN_METHOD = re.compile(r'(?P<kind>i|q)(?P<number>\d+\.?\d*)', re.IGNORE
 
 def remove_cols(
     df: pd.DataFrame, 
+    *,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
     suffix: str | None = None,
@@ -31,17 +32,13 @@ def remove_cols(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to remove.
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) to remove. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns to remove. Defaults to None.
         suffix (str | None, optional): The suffix of columns to remove. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to 
-            remove. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to remove. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with columns removed.
@@ -56,6 +53,7 @@ def remove_cols(
 def rename_cols(
     df: pd.DataFrame,
     mapper: dict,
+    *,
     regex_keys: bool = False,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
@@ -66,22 +64,15 @@ def rename_cols(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to 
-            desired column names. Existing column names can take the form of strings and/or 
-            compiled regex patterns.
-        regex_keys (bool, optional): Whether to treat string keys of mapper as regex patterns.
-            Defaults to False.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        mapper (dict[str | re.Pattern, str]): A dictionary mapping existing column names to desired column names.
+        regex_keys (bool, optional): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
-            to operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with renamed columns.
@@ -96,6 +87,7 @@ def rename_cols(
 
 def clean_df(
     df: pd.DataFrame,
+    *,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
     suffix: str | None = None,
@@ -107,17 +99,13 @@ def clean_df(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to clean.
-            If None, cleans all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) to clean. If None, cleans all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns to clean. Defaults to None.
         suffix (str | None, optional): The suffix of columns to clean. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to 
-            clean. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to clean. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with standardized characters.
@@ -161,6 +149,7 @@ def clean_arg(
 
 def remove_verbal_anchors(
     df: pd.DataFrame,
+    *,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
     suffix: str | None = None,
@@ -172,17 +161,13 @@ def remove_verbal_anchors(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
-            operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The updated DataFrame.
@@ -200,6 +185,7 @@ def remove_verbal_anchors(
 
 def filter_straightliners(
     df: pd.DataFrame,
+    *,
     min_unique: int = 2,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
@@ -212,19 +198,14 @@ def filter_straightliners(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        min_unique (int, optional): The minimum number of unique values desired in a row. 
-            If below this number, values will be replaced with NaN. Defaults to 2.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        min_unique (int, optional): The minimum number of unique values desired in a row. If below this number, values will be replaced with NaN. Defaults to 2.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
-            operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with straightliners' values replaced.
@@ -239,6 +220,7 @@ def filter_straightliners(
 def bin(
     df: pd.DataFrame,
     method: str | list,
+    *,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
     suffix: str | None = None,
@@ -250,23 +232,17 @@ def bin(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        method (str | list): The binning method to apply. Options include:
-            * A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of 
-            quartiles or a median split, respectively).
-            * A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width 
-            intervals that capture the range of values).
+        method (str | list): The binning method to apply.
+            * A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of quartiles or a median split, respectively).
+            * A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width intervals that capture the range of values).
             * A list of numbers: Explicitly defined bin edges.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to 
-            operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The binned DataFrame.
@@ -284,6 +260,7 @@ def bin(
 
 def filter_by_bounds(
     df: pd.DataFrame,
+    *,
     min_val: int | None = None,
     max_val: int | None = None,
     cols: list[str] | set[str] | str | None = None,
@@ -299,17 +276,13 @@ def filter_by_bounds(
         df (pd.DataFrame): The DataFrame.
         min (int, optional): The minimum value to keep. Defaults to None.
         max (int, optional): The maximum value to keep. Defaults to None.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
-            to operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The filtered DataFrame.
@@ -327,6 +300,7 @@ def filter_by_bounds(
 
 def filter_by_iqr(
     df: pd.DataFrame,
+    *,
     factor: float | int = 1.5,
     cols: list[str] | set[str] | str | None = None,
     prefix: str | None = None,
@@ -335,26 +309,18 @@ def filter_by_iqr(
 ) -> pd.DataFrame:
     """Filter DataFrame values based on the IQR method.
 
-    Replaces values that exceed the calculated bounds with NaN.
-    
-    Defines a maximum value as Q3 + factor * IQR and a minimum value as Q1 - factor * IQR 
-    where IQR = Q3 - Q1.
+    Replaces values that exceed the calculated bounds with NaN. Defines a maximum value as Q3 + factor * IQR and a minimum value as Q1 - `factor` * IQR where IQR = Q3 - Q1.
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        factor (float | int, optional): The factor by which to multiply the IQR to determine 
-            min and max values. Defaults to 1.5.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate.
-            If None, includes all columns. Defaults to None.
+        factor (float | int, optional): The factor by which to multiply the IQR to determine min and max values. Defaults to 1.5.
+        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
         suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which 
-            to operate. Defaults to None.
+        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The filtered DataFrame.
@@ -379,15 +345,13 @@ def _bin_by_string(
 ) -> pd.DataFrame:
     """Bin DataFrame values based on the given string.
 
-    Helper method to handle str input for 'method' arg of bin().
-
     Args:
         df (pd.DataFrame): The DataFrame.
         method (str): String representing the desired binning method, of the form 'q#' or 'i#'.
         cols (list[str]): A list of columns on which to operate. 
 
     Raises:
-        ValueError: If string argument for 'method' doesn't follow the expected pattern.
+        ValueError: If string argument for `method` doesn't follow the expected pattern.
 
     Returns:
         pd.DataFrame: The binned DataFrame.
@@ -430,8 +394,6 @@ def _bin_by_edges(
 ) -> pd.DataFrame:
     """Bin DataFrame values based on the given edges.
 
-    Helper method to handle list input for 'method' arg of bin().
-
     Args:
         df (pd.DataFrame): The DataFrame.
         method (list[int | float]): List of bin edges.
@@ -457,17 +419,13 @@ def _prep_args(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | None, optional): Desired column name(s).
-            If None, includes all columns. Defaults to None.
+        cols (list[str] | set[str] | None, optional): Desired column name(s). If None, includes all columns. Defaults to None.
         prefix (str | None, optional): The prefix of desired column names. Defaults to None.
         suffix (str | None, optional): The suffix of desired column names. Defaults to None.
-        pattern (re.Pattern | str | None, optional): A regex pattern describing desired column 
-            names. Defaults to None.
+        pattern (re.Pattern | str | None, optional): A regex pattern describing desired column names. Defaults to None.
 
     Note:
-        Selection parameters (e.g., 'cols', 'prefix', etc.) are used in conjunction with one another, 
-        taking the intersection of matching columns. In other words, only columns matching all selection
-        criteria will be selected.
+        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         tuple[pd.DataFrame, list[str]]: A tuple of the DataFrame copy and the list of desired column names.
@@ -509,9 +467,8 @@ def _stringify_mapper(
     """Standardize mapper argument to a dictionary of strings.
 
     Args:
-        mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex 
-            patterns to strings.
-        regex_keys (bool): Whether to treat string keys of mapper as regex patterns.
+        mapper (dict[str | re.Pattern, str]): A dictionary mapping strings and/or regex patterns to strings.
+        regex_keys (bool): Whether to treat string keys of `mapper` as regex patterns.
         cols (list[str]): A list of column names on which to operate.
 
     Returns:

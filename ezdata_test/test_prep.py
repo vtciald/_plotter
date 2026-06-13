@@ -74,7 +74,7 @@ def test_clean_df_cols_regex():
         'Col2': [25, 50]
     })
 
-    result = dp.clean_df(test_df, pattern = r'e')
+    result = dp.clean_df(test_df, cols = dp.select(pattern = r'e'))
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -93,7 +93,7 @@ def test_remove_cols():
         'Col2': [25, 50]
     })
 
-    result = dp.remove_cols(test_df, pattern = dp.PATTERN_ALIDA_OTHER_OE)
+    result = dp.remove_cols(test_df, dp.select(pattern = dp.PATTERN_ALIDA_OTHER_OE))
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -163,7 +163,7 @@ def test_recode_values():
         'Somewhat': 2,
         'Totally': 'Three',
     }
-    result = dp.recode_vals(test_df, mapper, regex_keys = True, suffix = '1')
+    result = dp.recode_vals(test_df, mapper, regex_keys = True, cols = dp.select(suffix = '1'))
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -187,7 +187,7 @@ def test_recode_values_new_col():
         'Somewhat': 2,
         'Totally': 'Three',
     }
-    result = dp.recode_vals(test_df, mapper, new_col_prefix = 'rc_', regex_keys = True, suffix = '1')
+    result = dp.recode_vals(test_df, mapper, new_col_prefix = 'rc_', regex_keys = True, cols = dp.select(suffix = '1'))
 
     pd.testing.assert_frame_equal(result, expected)
 
@@ -398,7 +398,7 @@ def test_get_cols_prefix():
     })
 
     expected_cols = ['Test_col_one', 'Test_col2']
-    _, result_cols = prep._prep_args(test_df, prefix = 'Test')
+    result_cols = prep._resolve_selection(test_df, dp.select(prefix = 'Test'))
 
     assert expected_cols == result_cols
 
@@ -416,7 +416,7 @@ def test_get_cols_suffix():
     })
 
     expected_cols = ['Col4_test', 'Col5_test']
-    _, result_cols = prep._prep_args(test_df, suffix = 'test')
+    result_cols = prep._resolve_selection(test_df, dp.select(suffix = 'test'))
 
     assert expected_cols == result_cols
 
@@ -437,7 +437,7 @@ def test_get_cols_pattern_regex():
 
     pattern = re.compile(r'col\d', re.IGNORECASE)
 
-    _, result_cols = prep._prep_args(test_df, pattern = pattern)
+    result_cols = prep._resolve_selection(test_df, dp.select(pattern = pattern))
 
     assert expected_cols == result_cols
 
@@ -460,7 +460,7 @@ def test_get_cols_multi():
 
     pattern = re.compile(r'\d_')
 
-    _, result_cols = prep._prep_args(test_df, prefix = 'Col', pattern = pattern, suffix = 'test')
+    result_cols = prep._resolve_selection(test_df, dp.select(prefix = 'Col', pattern = pattern, suffix = 'test'))
 
     assert expected_cols == result_cols
 
@@ -612,37 +612,37 @@ def test_rename_cols_extract():
 
     pd.testing.assert_frame_equal(result, expected)
 
-# Standardizing characters in arguments
-test_clean_arg()
+# # Standardizing characters in arguments
+# test_clean_arg()
 
-# Standardizing characters in dfs
-test_clean_df()
-test_clean_df_cols()
-test_clean_df_cols_regex()
+# # Standardizing characters in dfs
+# test_clean_df()
+# test_clean_df_cols()
+# test_clean_df_cols_regex()
 
-# Removing columns from dfs
-test_remove_cols()
+# # Removing columns from dfs
+# test_remove_cols()
 
-# Removing verbal anchors from values
-test_remove_verbal_anchors()
-test_remove_verbal_anchors_cols()
+# # Removing verbal anchors from values
+# test_remove_verbal_anchors()
+# test_remove_verbal_anchors_cols()
 
-# Filtering straightliners
-test_filter_straightliners()
-test_filter_straightliners_min_unique()
-test_filter_straightliners_cols()
+# # Filtering straightliners
+# test_filter_straightliners()
+# test_filter_straightliners_min_unique()
+# test_filter_straightliners_cols()
 
-# Binning values
-test_bin_i()
-test_bin_q()
-test_bin_list()
+# # Binning values
+# test_bin_i()
+# test_bin_q()
+# test_bin_list()
 
-# Filtering by bounds
-test_filter_by_bounds()
+# # Filtering by bounds
+# test_filter_by_bounds()
 
-# Filtering by IQR
-test_filter_by_iqr()
-test_filter_by_iqr_factor()
+# # Filtering by IQR
+# test_filter_by_iqr()
+# test_filter_by_iqr_factor()
 
 # Test getting column names
 test_get_cols_prefix()
@@ -650,13 +650,13 @@ test_get_cols_suffix()
 test_get_cols_pattern_regex()
 test_get_cols_multi()
 
-# Test renaming columns
-test_rename_cols()
-test_rename_cols_regex_arg()
-test_rename_cols_regex_pattern()
-test_rename_cols_duplicate()
-test_rename_cols_extract()
+# # Test renaming columns
+# test_rename_cols()
+# test_rename_cols_regex_arg()
+# test_rename_cols_regex_pattern()
+# test_rename_cols_duplicate()
+# test_rename_cols_extract()
 
-# Test recoding values
-test_recode_values()
-test_recode_values_new_col()
+# # Test recoding values
+# test_recode_values()
+# test_recode_values_new_col()

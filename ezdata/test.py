@@ -3,6 +3,7 @@ import pandas as pd
 import scipy.stats
 import re
 from . import prep
+from .selector import Selector
 
 def test_one_sample(
     df: pd.DataFrame,
@@ -10,10 +11,7 @@ def test_one_sample(
     *,
     null: float = 0.0,
     alpha: float = 0.05,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Run a one-sample test.
 
@@ -22,10 +20,7 @@ def test_one_sample(
         method (str): The test method. Supported choices: 't', 'wilcoxon', 'sign', 'bootstrap'.
         null (float, optional): The value representing the central tendency of the null hypothesis. Defaults to 0.
         alpha (float, optional): The desired alpha. Defaults to 0.05.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Raises:
         ValueError: If string argument for `method` isn't recognized.
@@ -42,7 +37,8 @@ def test_one_sample(
             - 'count': The number of valid non-nan observations.
     """
 
-    df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = prep._resolve_selection(df, cols)
 
     if method == 't':
         result = _one_sample_t(df, cols, null, alpha)
@@ -67,10 +63,7 @@ def test_one_sample_proportion(
     *,
     null: float = 0.5,
     alpha: float = 0.05,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Run a one-sample test.
 
@@ -79,10 +72,7 @@ def test_one_sample_proportion(
         method (str): The test method. Supported choices: 't', 'sign', 'bootstrap'.
         null (float, optional): The value representing the central tendency of the null hypothesis. Defaults to 0.5.
         alpha (float, optional): The desired alpha. Defaults to 0.05.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Raises:
         ValueError: If string argument for `method` isn't recognized.
@@ -95,7 +85,8 @@ def test_one_sample_proportion(
             - 'stat_sig': A boolean flag indicating statistical significance.
             - 'count': The number of valid non-nan observations.    """
 
-    df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = prep._resolve_selection(df, cols)
 
     if method == 't':
         result = _one_sample_t(df, cols, null, alpha)

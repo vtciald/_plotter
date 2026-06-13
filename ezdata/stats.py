@@ -5,6 +5,7 @@ from statsmodels.stats.proportion import proportion_confint
 from typing import Callable
 import re
 from . import prep
+from .selector import Selector
 
 def agg_cols(
     df: pd.DataFrame,
@@ -12,10 +13,7 @@ def agg_cols(
     target_col: str,
     *,
     drop_inputs: bool = False,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Aggregate across columns to create a new column.
 
@@ -26,22 +24,17 @@ def agg_cols(
         method (str): The aggregation method. Supported choices: 'min', 'max', 'sum', 'mean', 'median', 'count', 'std', 'var', 'prod', 'or', 'and'.
         target_col (str): The target column name in which to store the aggregated values.
         drop_inputs (bool): If true, drops the columns used in aggregation (i.e., those indicated the column-selection parameters). Defaults to False.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Raises:
         ValueError: If the aggregation method specified in `method` isn't recognized.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
 
     Returns:
         pd.DataFrame: The DataFrame with the aggregated values stored in the target column.
     """
     
-    df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = prep._resolve_selection(df, cols)
 
     valid_methods = {'min', 'max', 'sum', 'mean', 'median', 'count', 'nunique', 'std', 'var', 'prod', 'or', 'and'}
     pd_methods = {'min', 'max', 'sum', 'mean', 'median', 'count', 'nunique', 'std', 'var', 'prod'}
@@ -68,10 +61,7 @@ def agg_rows(
     df: pd.DataFrame,
     method: str | list[str],
     *,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame | pd.Series:
     """Aggregate across rows of the given DataFrame to create a new DataFrame or Series.
 
@@ -80,22 +70,17 @@ def agg_rows(
     Args:
         df (pd.DataFrame): The DataFrame.
         method (str | list[str]): The aggregation method. Supported choices: 'min', 'max', 'sum', 'mean', 'median', 'count', 'std', 'var', 'prod'.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to aggregate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns to aggregate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns to aggregate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to aggregate. Defaults to None.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Raises:
         ValueError: If a given aggregation method in `method` isn't recognized.
 
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
-
     Returns:
         pd.DataFrame | pd.Series: The resulting DataFrame or Series.
     """
-    
-    df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
+
+    df = df.copy()
+    cols = prep._resolve_selection(df, cols)
 
     valid_methods = {'min', 'max', 'sum', 'mean', 'median', 'count', 'nunique', 'std', 'var', 'prod'}
     method_map = {}
@@ -125,10 +110,7 @@ def calc_ci(
     alpha: float = 0.05,
     random_state: int = 0,
     metric: str = 'mean',
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,       
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Calculate confidence intervals according to the given method.
     
@@ -143,20 +125,15 @@ def calc_ci(
         alpha (float, optional): The desired alpha. Defaults to 0.05.
         random_state (int, optional): A random-number-generator seed, relevant for bootstrapping. Defaults to 0.
         metric (str, optional): The measure of central tendency to craft the interval around, relevant for bootstrapping. Supported choices: 'mean', 'median'. Defaults to 'mean'.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
         
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
-
     Returns:
         pd.DataFrame: A DataFrame with indices matching the columns specified in the column-selection parameters and columns 'point_estimate', 'lower', 'upper', 'count'.
     """
     
-    df, cols = prep._prep_args(df, cols, prefix, suffix, pattern)
-
+    df = df.copy()
+    cols = prep._resolve_selection(df, cols)
+    
     parametric_methods = {'z', 't'}
     proportion_methods = {'wald', 'wilson', 'agresti_coull', 'clopper_pearson', 'beta', 'jeffreys'}
     bootstrap_methods = {'bootstrap_bca', 'bootstrap_percentile', 'bootstrap_basic'}

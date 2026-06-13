@@ -1,4 +1,5 @@
 import pandas as pd
+from .selector import Selector
 import warnings
 import re
 
@@ -22,29 +23,20 @@ _PATTERN_BIN_METHOD = re.compile(r'(?P<kind>i|q)(?P<number>\d+\.?\d*)', re.IGNOR
 
 def remove_cols(
     df: pd.DataFrame, 
-    *,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector,
 ) -> pd.DataFrame:
     """Remove columns whose labels match the given criteria.
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to remove. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns to remove. Defaults to None.
-        suffix (str | None, optional): The suffix of columns to remove. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to remove. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector): The columns to remove.
 
     Returns:
         pd.DataFrame: The DataFrame with columns removed.
     """
     
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     df = df.drop(columns = cols)
 
@@ -55,10 +47,7 @@ def rename_cols(
     mapper: dict | str | re.Pattern,
     *,
     regex_keys: bool = False,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Rename DataFrame columns according to the given mapper.
 
@@ -66,19 +55,14 @@ def rename_cols(
         df (pd.DataFrame): The DataFrame.
         mapper (dict | str | re.Pattern): A dictionary mapping existing column names to desired column names. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting column names.
         regex_keys (bool, optional): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The DataFrame with renamed columns.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     df = _recode(
         df, 
@@ -96,10 +80,7 @@ def recode_vals(
     *,
     new_col_prefix: str | None = None,
     regex_keys: bool = False,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Recode DataFrame values according to the given mapper.
 
@@ -108,19 +89,14 @@ def recode_vals(
         mapper (dict | str | re.Pattern): A dictionary mapping existing values to desired values. Alternatively, this can be a regex pattern with a single capture group to define what to extract from exisiting values.
         new_col_prefix (str | None, optional): A prefix to add to new columns with the potentially-recoded values. If None, will not create new columns. Defaults to None.
         regex_keys (bool, optional): Whether to treat string keys of `mapper` as regex patterns. Defaults to False.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The DataFrame with renamed columns.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     df = _recode(
         df, 
@@ -136,10 +112,7 @@ def recode_vals(
 def clean_df(
     df: pd.DataFrame,
     *,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Standardize characters and strip strings in DataFrame.
 
@@ -147,19 +120,14 @@ def clean_df(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) to clean. If None, cleans all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns to clean. Defaults to None.
-        suffix (str | None, optional): The suffix of columns to clean. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns to clean. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The DataFrame with standardized characters.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     rename_dict = {col: str(col).translate(_FIX_CHAR_MAP).strip() for col in cols}
     df = df.rename(columns = rename_dict)
@@ -198,10 +166,7 @@ def clean_arg(
 def remove_verbal_anchors(
     df: pd.DataFrame,
     *,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Extract leading digits from string values in a DataFrame.
 
@@ -209,19 +174,14 @@ def remove_verbal_anchors(
 
     Args:
         df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The updated DataFrame.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     str_cols = list(df[cols].select_dtypes(include=['object', 'string']).columns)
 
@@ -241,10 +201,7 @@ def filter_straightliners(
     df: pd.DataFrame,
     *,
     min_unique: int = 2,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Filter DataFrame values based on the required minimum number of unique values in a row.
 
@@ -253,19 +210,14 @@ def filter_straightliners(
     Args:
         df (pd.DataFrame): The DataFrame.
         min_unique (int, optional): The minimum number of unique values desired in a row. If below this number, values will be replaced with NaN. Defaults to 2.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The DataFrame with straightliners' values replaced.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     df[cols] = df[cols].where(df[cols].nunique(axis = 1) >= min_unique)
 
@@ -275,10 +227,7 @@ def bin(
     df: pd.DataFrame,
     method: str | list,
     *,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Bin DataFrame values.
 
@@ -290,19 +239,14 @@ def bin(
             * A string of the form 'q#': Quantile binning (e.g., 'q4' and 'q2' bins on the basis of quartiles or a median split, respectively).
             * A string of the form 'i#': Interval binning (e.g., 'i5' will create 5 equal-width intervals that capture the range of values).
             * A list of numbers: Explicitly defined bin edges.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The binned DataFrame.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     if isinstance(method, str):
         df = _bin_by_string(df, method, cols = cols)
@@ -317,10 +261,7 @@ def filter_by_bounds(
     *,
     min_val: int | None = None,
     max_val: int | None = None,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Filter DataFrame values based on the given minimum and maximum.
 
@@ -330,19 +271,14 @@ def filter_by_bounds(
         df (pd.DataFrame): The DataFrame.
         min (int, optional): The minimum value to keep. Defaults to None.
         max (int, optional): The maximum value to keep. Defaults to None.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The filtered DataFrame.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     if min_val is not None:
         df[cols] = df[cols].where(df[cols] >= min_val)
@@ -356,10 +292,7 @@ def filter_by_iqr(
     df: pd.DataFrame,
     *,
     factor: float | int = 1.5,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: str | re.Pattern | None = None,
+    cols: list[str] | set[str] | str | Selector | None = None,
 ) -> pd.DataFrame:
     """Filter DataFrame values based on the IQR method.
 
@@ -368,19 +301,14 @@ def filter_by_iqr(
     Args:
         df (pd.DataFrame): The DataFrame.
         factor (float | int, optional): The factor by which to multiply the IQR to determine min and max values. Defaults to 1.5.
-        cols (list[str] | set[str] | str | None, optional): Column(s) on which to operate. If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of columns on which to operate. Defaults to None.
-        suffix (str | None, optional): The suffix of columns on which to operate. Defaults to None.
-        pattern (str | re.Pattern | None, optional): A regex pattern describing columns on which to operate. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
+        cols (list[str] | set[str] | str | Selector | None, optional): Column(s) to include. If None, includes all columns. Defaults to None.
 
     Returns:
         pd.DataFrame: The filtered DataFrame.
     """
 
-    df, cols = _prep_args(df, cols, prefix, suffix, pattern)
+    df = df.copy()
+    cols = _resolve_selection(df, cols)
 
     qs = df[cols].quantile([0.25, 0.75], axis = 0)
     iqrs = qs.loc[0.75] - qs.loc[0.25]
@@ -461,57 +389,6 @@ def _bin_by_edges(
         df[col] = pd.cut(df[col], method).astype(str)
 
     return df
-
-def _prep_args(
-    df: pd.DataFrame,
-    cols: list[str] | set[str] | str | None = None,
-    prefix: str | None = None,
-    suffix: str | None = None,
-    pattern: re.Pattern | str | None = None,
-) -> tuple[pd.DataFrame, list[str]]:
-    """Make a copy of the DataFrame and get a list of selected column names.
-
-    Args:
-        df (pd.DataFrame): The DataFrame.
-        cols (list[str] | set[str] | None, optional): Desired column name(s). If None, includes all columns. Defaults to None.
-        prefix (str | None, optional): The prefix of desired column names. Defaults to None.
-        suffix (str | None, optional): The suffix of desired column names. Defaults to None.
-        pattern (re.Pattern | str | None, optional): A regex pattern describing desired column names. Defaults to None.
-
-    Note:
-        Selection parameters (e.g., `cols`, `prefix`, etc.) are used in conjunction with one another, taking the intersection of matching columns. In other words, only columns matching all selection criteria will be selected.
-
-    Returns:
-        tuple[pd.DataFrame, list[str]]: A tuple of the DataFrame copy and the list of desired column names.
-    """
-            
-    df = df.copy()
-    all_cols = df.columns.tolist()
-
-    if cols is None and prefix is None and suffix is None and pattern is None:
-        return df, all_cols
-
-    if cols is None:
-        cols = set(all_cols)
-
-    elif isinstance(cols, str):
-        cols = set([cols])
-
-    elif isinstance(cols, list):
-        cols = set(cols)     
-
-    if isinstance(pattern, str):
-        pattern = re.compile(pattern)
-
-    matched_cols = [
-        col for col in all_cols
-        if (cols is None or col in cols)
-        and (prefix is None or col.startswith(prefix))
-        and (suffix is None or col.endswith(suffix))
-        and (pattern is None or re.search(pattern, col))
-    ]
-    
-    return df, matched_cols
 
 def _recode(
     df: pd.DataFrame,
@@ -683,4 +560,30 @@ def _standardize_extract_mapper(
         if match:
             new_mapper[val] = match.group(1)
 
-    return new_mapper    
+    return new_mapper
+
+def _resolve_selection(
+    df: pd.DataFrame,
+    selection: list[str] | set[str] | str | Selector | None,
+) -> list[str]:
+    """Resolve column selection.
+
+    Args:
+        df (pd.DataFrame): The DataFrame.
+        selection (list[str] | set[str] | str | Selector | None): String column label(s) or a Selector.
+
+    Returns:
+        list[str]: A list of string column labels.
+    """
+        
+    if isinstance(selection, Selector):
+        return selection(df)
+    
+    if isinstance(selection, str):
+        return [selection]
+    
+    if isinstance(selection, (list, set)):
+        return list(selection)
+    
+    if selection is None:
+        return df.columns.tolist()
